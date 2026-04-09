@@ -1,0 +1,13 @@
+{
+  "name": "wooni-pet",
+  "version": "1.0.0",
+  "description": "Wooni - AI Desktop Pet that follows your cursor and answers questions via Claude Code",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

@@ -1,0 +1,573 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  user-select: none;
+  -webkit-app-region: no-drag;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ===== Pet Container ===== */
+#pet-container {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+#pet {
+  width: 90px;
+  height: 100px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  position: relative;
+}
+
+#pet:hover {
+  transform: scale(1.05);
+}
+
+#pet-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+}
+
+/* ===== Limb base styles ===== */
+.arm, .leg {
+  transform-origin: center top;
+}
+
+.arm-left { transform-origin: 18px 75px; }
+.arm-right { transform-origin: 102px 75px; }
+.leg-left { transform-origin: 35px 100px; }
+.leg-right { transform-origin: 85px 100px; }
+
+/* ===== Idle Animation ===== */
+.state-idle #pet-svg {
+  animation: idle-bounce 2.5s ease-in-out infinite;
+}
+
+@keyframes idle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.state-idle .tail {
+  animation: tail-wag-slow 3s ease-in-out infinite;
+  transform-origin: 115px 80px;
+}
+
+@keyframes tail-wag-slow {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(10deg); }
+}
+
+.state-idle .arm-left {
+  animation: idle-arm-sway 3s ease-in-out infinite;
+}
+.state-idle .arm-right {
+  animation: idle-arm-sway 3s ease-in-out infinite 0.3s;
+}
+
+@keyframes idle-arm-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* ===== Walking Animation ===== */
+.state-walking #pet-svg {
+  animation: walk-bounce 0.5s ease-in-out infinite;
+}
+
+@keyframes walk-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-3px) rotate(-2deg); }
+  75% { transform: translateY(-3px) rotate(2deg); }
+}
+
+.state-walking .tail {
+  animation: tail-wag-fast 0.5s ease-in-out infinite;
+  transform-origin: 115px 80px;
+}
+
+@keyframes tail-wag-fast {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(15deg); }
+}
+
+.state-walking .leg-left {
+  animation: walk-leg 0.5s ease-in-out infinite;
+}
+.state-walking .leg-right {
+  animation: walk-leg 0.5s ease-in-out infinite 0.25s;
+}
+
+@keyframes walk-leg {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+}
+
+.state-walking .arm-left {
+  animation: walk-arm 0.5s ease-in-out infinite 0.25s;
+}
+.state-walking .arm-right {
+  animation: walk-arm 0.5s ease-in-out infinite;
+}
+
+@keyframes walk-arm {
+  0%, 100% { transform: rotate(8deg); }
+  50% { transform: rotate(-8deg); }
+}
+
+/* ===== Sitting Animation ===== */
+.state-sitting #pet-svg {
+  animation: sit-breathe 3s ease-in-out infinite;
+}
+
+@keyframes sit-breathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.97); }
+}
+
+.state-sitting .leg-left,
+.state-sitting .leg-right {
+  animation: sit-legs 0.5s ease-out forwards;
+}
+
+@keyframes sit-legs {
+  to { transform: rotate(15deg); }
+}
+
+/* ===== Dancing Animation ===== */
+.state-dancing #pet-svg {
+  animation: dance 0.5s ease-in-out infinite;
+}
+
+@keyframes dance {
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  25% { transform: translateY(-10px) rotate(-10deg) scale(1.05); }
+  50% { transform: translateY(0) rotate(0deg) scale(1); }
+  75% { transform: translateY(-10px) rotate(10deg) scale(1.05); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+.state-dancing .arm-left {
+  animation: dance-arm-left 0.5s ease-in-out infinite;
+}
+.state-dancing .arm-right {
+  animation: dance-arm-right 0.5s ease-in-out infinite;
+}
+
+@keyframes dance-arm-left {
+  0%, 100% { transform: rotate(-20deg); }
+  50% { transform: rotate(30deg); }
+}
+
+@keyframes dance-arm-right {
+  0%, 100% { transform: rotate(20deg); }
+  50% { transform: rotate(-30deg); }
+}
+
+.state-dancing .leg-left {
+  animation: dance-leg 0.25s ease-in-out infinite;
+}
+.state-dancing .leg-right {
+  animation: dance-leg 0.25s ease-in-out infinite 0.125s;
+}
+
+@keyframes dance-leg {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+.state-dancing .blush-left,
+.state-dancing .blush-right {
+  animation: blush-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes blush-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+/* ===== Listening Animation ===== */
+.state-listening .ear-left {
+  animation: ear-perk-left 0.6s ease-out forwards;
+}
+
+.state-listening .ear-right {
+  animation: ear-perk-right 0.6s ease-out forwards;
+}
+
+@keyframes ear-perk-left {
+  to { transform: rotate(-15deg) translateY(-5px); transform-origin: 32px 45px; }
+}
+
+@keyframes ear-perk-right {
+  to { transform: rotate(15deg) translateY(-5px); transform-origin: 88px 45px; }
+}
+
+.state-listening #pet-svg {
+  animation: listen-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes listen-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+.state-listening .arm-left {
+  animation: listen-arm 1s ease-in-out infinite;
+}
+.state-listening .arm-right {
+  animation: listen-arm 1s ease-in-out infinite 0.2s;
+}
+
+@keyframes listen-arm {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-15deg); }
+}
+
+.state-listening .eyes .eye {
+  animation: eye-blink-listen 2s ease-in-out infinite;
+}
+
+@keyframes eye-blink-listen {
+  0%, 45%, 55%, 100% { ry: 7; }
+  50% { ry: 1; }
+}
+
+/* ===== Talking Animation ===== */
+.state-talking #pet-svg {
+  animation: talk-bounce 0.8s ease-in-out infinite;
+}
+
+@keyframes talk-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-3px); }
+  60% { transform: translateY(-1px); }
+}
+
+.state-talking .mouth {
+  animation: mouth-talk 0.4s ease-in-out infinite;
+}
+
+@keyframes mouth-talk {
+  0%, 100% { d: path("M52,85 Q60,91 68,85"); }
+  50% { d: path("M52,85 Q60,96 68,85"); }
+}
+
+.state-talking .arm-right {
+  animation: talk-gesture 1.2s ease-in-out infinite;
+}
+
+@keyframes talk-gesture {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-25deg); }
+  60% { transform: rotate(-10deg); }
+}
+
+/* ===== Sleeping Animation ===== */
+.state-sleeping #pet-svg {
+  animation: sleep-breathe 3s ease-in-out infinite;
+}
+
+@keyframes sleep-breathe {
+  0%, 100% { transform: scaleY(1) scaleX(1); }
+  50% { transform: scaleY(0.95) scaleX(1.02); }
+}
+
+.state-sleeping .eyes {
+  display: none;
+}
+
+.state-sleeping .eyes-closed {
+  display: block !important;
+}
+
+.state-sleeping .arm-left,
+.state-sleeping .arm-right {
+  animation: sleep-arms 3s ease-in-out infinite;
+}
+
+@keyframes sleep-arms {
+  0%, 100% { transform: rotate(5deg); }
+  50% { transform: rotate(8deg); }
+}
+
+/* ===== Grabbed Animation ===== */
+.state-grabbed #pet-svg {
+  animation: grabbed-squish 0.15s ease-out forwards;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25));
+}
+
+@keyframes grabbed-squish {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15, 0.85); }
+  100% { transform: scale(1.1, 0.9); }
+}
+
+.state-grabbed .eyes {
+  display: none;
+}
+
+.state-grabbed .eyes-dizzy {
+  display: block !important;
+}
+
+.state-grabbed .mouth {
+  d: path("M52,85 Q60,80 68,85");
+}
+
+.state-grabbed .arm-left {
+  animation: grabbed-arm-left 0.3s ease-out forwards;
+}
+.state-grabbed .arm-right {
+  animation: grabbed-arm-right 0.3s ease-out forwards;
+}
+
+@keyframes grabbed-arm-left {
+  to { transform: rotate(-40deg); }
+}
+@keyframes grabbed-arm-right {
+  to { transform: rotate(40deg); }
+}
+
+.state-grabbed .leg-left {
+  animation: grabbed-leg 0.2s ease-out forwards;
+}
+.state-grabbed .leg-right {
+  animation: grabbed-leg 0.2s ease-out forwards 0.05s;
+}
+
+@keyframes grabbed-leg {
+  to { transform: rotate(20deg); }
+}
+
+/* ===== Flung Animation ===== */
+.state-flung .eyes {
+  display: none;
+}
+
+.state-flung .eyes-dizzy {
+  display: block !important;
+}
+
+.state-flung .eyes-closed {
+  display: none !important;
+}
+
+.state-flung .mouth {
+  d: path("M50,85 Q60,80 70,85");
+}
+
+.state-flung .arm-left {
+  animation: flung-arm-flail 0.2s ease-in-out infinite alternate;
+}
+.state-flung .arm-right {
+  animation: flung-arm-flail 0.2s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes flung-arm-flail {
+  0% { transform: rotate(-50deg); }
+  100% { transform: rotate(50deg); }
+}
+
+.state-flung .leg-left {
+  animation: flung-leg-flail 0.15s ease-in-out infinite alternate;
+}
+.state-flung .leg-right {
+  animation: flung-leg-flail 0.15s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes flung-leg-flail {
+  0% { transform: rotate(-30deg); }
+  100% { transform: rotate(30deg); }
+}
+
+.state-flung .tail {
+  animation: flung-tail 0.15s ease-in-out infinite alternate;
+  transform-origin: 115px 80px;
+}
+
+@keyframes flung-tail {
+  0% { transform: rotate(-20deg); }
+  100% { transform: rotate(20deg); }
+}
+
+.state-flung .blush-left,
+.state-flung .blush-right {
+  opacity: 0.8;
+}
+
+/* ===== Flip for direction ===== */
+#pet.facing-left #pet-svg {
+  transform: scaleX(-1);
+}
+
+/* ===== Voice Indicator ===== */
+#voice-indicator {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.voice-ring {
+  width: 5px;
+  background: #FF6B6B;
+  border-radius: 3px;
+  animation: voice-bar 0.6s ease-in-out infinite;
+}
+
+.voice-ring:nth-child(1) {
+  height: 10px;
+  animation-delay: 0s;
+}
+.voice-ring:nth-child(2) {
+  height: 16px;
+  animation-delay: 0.15s;
+}
+.voice-ring:nth-child(3) {
+  height: 10px;
+  animation-delay: 0.3s;
+}
+
+@keyframes voice-bar {
+  0%, 100% { transform: scaleY(0.5); }
+  50% { transform: scaleY(1.2); }
+}
+
+/* ===== Speech Bubble ===== */
+#speech-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 16px;
+  padding: 12px 16px;
+  max-width: 300px;
+  min-width: 60px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  pointer-events: auto;
+  animation: bubble-in 0.3s ease-out;
+  z-index: 10000;
+}
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.9); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+#speech-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333;
+  word-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.speech-arrow {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid white;
+}
+
+/* ===== Chat Container ===== */
+#chat-container {
+  position: fixed;
+  z-index: 10001;
+  pointer-events: auto;
+}
+
+#chat-box {
+  display: flex;
+  gap: 6px;
+  background: white;
+  border-radius: 24px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  animation: chat-slide-in 0.3s ease-out;
+  min-width: 280px;
+}
+
+@keyframes chat-slide-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#chat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: #333;
+  font-family: inherit;
+}
+
+#chat-input::placeholder {
+  color: #aaa;
+}
+
+#chat-send {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: #7EC8E3;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+#chat-send:hover {
+  background: #5BB0D0;
+}
+
+/* ===== Settings Button ===== */
+#settings-btn {
+  position: fixed;
+  pointer-events: auto;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+  z-index: 10000;
+}
+
+#settings-btn:hover {
+  opacity: 1;
+}

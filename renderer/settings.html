@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>우니 설정</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f7;
+      color: #333;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .setting-group {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .setting-group h2 {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+    .setting-row + .setting-row {
+      border-top: 1px solid #eee;
+    }
+    label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    input[type="text"] {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 14px;
+      width: 160px;
+      text-align: right;
+    }
+    input[type="range"] {
+      width: 120px;
+    }
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ccc;
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+    .toggle .slider:before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    .toggle input:checked + .slider {
+      background: #7EC8E3;
+    }
+    .toggle input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    button.save {
+      width: 100%;
+      padding: 12px;
+      background: #7EC8E3;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.save:hover {
+      background: #5BB0D0;
+    }
+    .saved-msg {
+      text-align: center;
+      color: #4CAF50;
+      font-size: 13px;
+      margin-top: 8px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .saved-msg.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <h1>🐾 우니 설정</h1>
+
+  <div class="setting-group">
+    <h2>캐릭터</h2>
+    <div class="setting-row">
+      <label>펫 이름</label>
+      <input type="text" id="pet-name" value="우니" />
+    </div>
+    <div class="setting-row">
+      <label>크기</label>
+      <input type="range" id="pet-size" min="40" max="160" value="80" />
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <h2>음성</h2>
+    <div class="setting-row">
+      <label>음성 인식</label>
+      <label class="toggle">
+        <input type="checkbox" id="voice-enabled" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <label>웨이크 워드</label>
+      <input type="text" id="wake-word" value="우니야" />
+    </div>
+    <div class="setting-row">
+      <label>영문 웨이크 워드</label>
+      <input type="text" id="wake-word-alt" value="wooniya" />
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <h2>단축키</h2>
+    <div class="setting-row">
+      <label>음성 활성화</label>
+      <input type="text" id="shortcut" value="Cmd+Shift+U" readonly />
+    </div>
+  </div>
+
+  <button class="save" onclick="saveSettings()">저장</button>
+  <div class="saved-msg" id="saved-msg">설정이 저장되었습니다!</div>
+
+  <script>
+    // Load saved settings
+    try {
+      const saved = localStorage.getItem('wooni-settings');
+      if (saved) {
+        const s = JSON.parse(saved);
+        if (s.petName) document.getElementById('pet-name').value = s.petName;
+        if (s.petSize) document.getElementById('pet-size').value = s.petSize;
+        if (s.voiceEnabled !== undefined) document.getElementById('voice-enabled').checked = s.voiceEnabled;
+        if (s.wakeWord) document.getElementById('wake-word').value = s.wakeWord;
+        if (s.wakeWordAlt) document.getElementById('wake-word-alt').value = s.wakeWordAlt;
+      }
+    } catch (e) {}
+
+    function saveSettings() {
+      const settings = {
+        petName: document.getElementById('pet-name').value,
+        petSize: parseInt(document.getElementById('pet-size').value),
+        voiceEnabled: document.getElementById('voice-enabled').checked,
+        wakeWord: document.getElementById('wake-word').value,
+        wakeWordAlt: document.getElementById('wake-word-alt').value,
+      };
+      localStorage.setItem('wooni-settings', JSON.stringify(settings));
+
+      const msg = document.getElementById('saved-msg');
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 2000);
+    }
+  </script>
+</body>
+</html>
