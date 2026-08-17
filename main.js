@@ -301,21 +301,30 @@ ipcMain.on('open-settings', () => {
 // Usage is read through each vendor's own CLI. Wooni never reads auth files or
 // Keychain credentials directly.
 const AI_USAGE_CACHE_MS = 45000;
+const BINARY_RESOLVE_CACHE_MS = 5 * 60 * 1000;
+const MISSING_BINARY_CACHE_MS = 30 * 1000;
 const aiUsageCache = new Map();
 const aiUsagePending = new Map();
 const resolvedBinaries = new Map();
 
 function resolveCliBinary(name) {
   if (!['claude', 'codex', 'node'].includes(name)) return null;
-  if (resolvedBinaries.has(name)) return resolvedBinaries.get(name);
+  const cached = resolvedBinaries.get(name);
+  if (cached) {
+    const cacheMs = cached.binary ? BINARY_RESOLVE_CACHE_MS : MISSING_BINARY_CACHE_MS;
+    if (Date.now() - cached.checkedAt < cacheMs) return cached.binary;
+  }
+
+  const remember = (binary) => {
+    resolvedBinaries.set(name, { binary, checkedAt: Date.now() });
+    return binary;
+  };
 
   const home = os.homedir();
   const candidates = [
     path.join(home, '.local', 'bin', name),
     path.join(home, '.claude', 'local', name),
     path.join(home, '.npm-global', 'bin', name),
-    path.join('/opt/homebrew/bin', name),
-    path.join('/usr/local/bin', name),
   ];
 
   const pathDirs = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
@@ -324,13 +333,13 @@ function resolveCliBinary(name) {
   for (const candidate of candidates) {
     try {
       fs.accessSync(candidate, fs.constants.X_OK);
-      resolvedBinaries.set(name, candidate);
-      return candidate;
+      return remember(candidate);
     } catch (e) {}
   }
 
-  // Apps opened from Finder often receive a minimal PATH. Ask the login shell
-  // as a final fallback so fnm/nvm/Homebrew installs can still be discovered.
+  // Apps opened from Finder often receive a minimal PATH. Prefer the user's
+  // login-shell selection before system-wide fallbacks so fnm/nvm/asdf shims
+  // win over an older /usr/local installation.
   try {
     const result = spawnSync('/bin/zsh', ['-lic', `command -v ${name}`], {
       encoding: 'utf8',
@@ -339,13 +348,27 @@ function resolveCliBinary(name) {
     const resolved = (result.stdout || '').trim().split('\n').pop();
     if (resolved) {
       fs.accessSync(resolved, fs.constants.X_OK);
-      resolvedBinaries.set(name, resolved);
-      return resolved;
+      return remember(resolved);
     }
   } catch (e) {}
 
-  resolvedBinaries.set(name, null);
-  return null;
+  const systemCandidates = [
+    path.join('/opt/homebrew/bin', name),
+    path.join('/usr/local/bin', name),
+  ];
+  for (const candidate of systemCandidates) {
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return remember(candidate);
+    } catch (e) {}
+  }
+
+  return remember(null);
+}
+
+function invalidateProviderBinary(provider) {
+  resolvedBinaries.delete(provider);
+  if (provider === 'claude') resolvedBinaries.delete('node');
 }
 
 function getCliEnvironment(binary) {
@@ -397,7 +420,7 @@ function parseClaudeResetTime(text) {
     jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
     jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
   };
-  const match = text.match(/(?:(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+at\s+)?(\d{1,2}):(\d{2})(am|pm)/i);
+  const match = text.match(/(?:(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+at\s+)?(\d{1,2})(?::(\d{2}))?(am|pm)/i);
   if (!match) return null;
 
   const now = new Date();
@@ -406,14 +429,20 @@ function parseClaudeResetTime(text) {
   let hour = Number(match[3]) % 12;
   if (match[5].toLowerCase() === 'pm') hour += 12;
 
-  const reset = new Date(now.getFullYear(), month, day, hour, Number(match[4]), 0, 0);
+  const reset = new Date(now.getFullYear(), month, day, hour, Number(match[4] || 0), 0, 0);
   if (reset.getTime() < now.getTime() - 24 * 60 * 60 * 1000) {
     reset.setFullYear(reset.getFullYear() + 1);
   }
   return Math.floor(reset.getTime() / 1000);
 }
 
-async function fetchClaudeUsage() {
+function claudeWindowLabel(sourceLabel) {
+  if (/session/i.test(sourceLabel)) return '5h';
+  if (/week\s*\(all models\)/i.test(sourceLabel)) return '7d';
+  return sourceLabel.replace(/^Current\s+/i, '').trim();
+}
+
+async function fetchClaudeUsage(allowRetry = true) {
   const binary = resolveCliBinary('claude');
   if (!binary) return { available: false, reason: 'cli_not_found', windows: [] };
 
@@ -423,6 +452,10 @@ async function fetchClaudeUsage() {
     12000,
   );
   if (result.code !== 0) {
+    if (allowRetry && !result.timedOut) {
+      invalidateProviderBinary('claude');
+      return fetchClaudeUsage(false);
+    }
     return {
       available: false,
       reason: result.timedOut ? 'timeout' : 'cli_error',
@@ -430,25 +463,20 @@ async function fetchClaudeUsage() {
     };
   }
 
-  const session = result.stdout.match(/Current session:\s*(\d+(?:\.\d+)?)%\s*used\s*[·-]\s*resets\s+([^\r\n]+)/i);
-  const weekly = result.stdout.match(/Current week\s*\(all models\):\s*(\d+(?:\.\d+)?)%\s*used\s*[·-]\s*resets\s+([^\r\n]+)/i);
   const windows = [];
-
-  if (session) {
+  const usageLine = /^(Current\s+[^:\r\n]+):\s*(\d+(?:\.\d+)?)%\s*used\s*[·-]\s*resets\s+([^\r\n]+)/gim;
+  for (const match of result.stdout.matchAll(usageLine)) {
     windows.push({
-      label: '5h',
-      usedPercent: Number(session[1]),
-      resetsAt: parseClaudeResetTime(session[2]),
-      resetText: session[2].trim(),
+      label: claudeWindowLabel(match[1]),
+      usedPercent: Number(match[2]),
+      resetsAt: parseClaudeResetTime(match[3]),
+      resetText: match[3].trim(),
     });
   }
-  if (weekly) {
-    windows.push({
-      label: '7d',
-      usedPercent: Number(weekly[1]),
-      resetsAt: parseClaudeResetTime(weekly[2]),
-      resetText: weekly[2].trim(),
-    });
+
+  if (windows.length === 0 && allowRetry) {
+    invalidateProviderBinary('claude');
+    return fetchClaudeUsage(false);
   }
 
   return {
@@ -467,11 +495,11 @@ function codexWindowLabel(minutes) {
   return `${minutes}m`;
 }
 
-async function fetchCodexUsage() {
+async function fetchCodexUsage(allowRetry = true) {
   const binary = resolveCliBinary('codex');
   if (!binary) return { available: false, reason: 'cli_not_found', windows: [] };
 
-  return new Promise((resolve) => {
+  const data = await new Promise((resolve) => {
     const child = spawn(binary, ['app-server', '--stdio'], {
       env: getCliEnvironment(binary),
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -551,6 +579,12 @@ async function fetchCodexUsage() {
       finish({ available: false, reason: 'timeout', windows: [] });
     }, 10000);
   });
+
+  if (allowRetry && ['cli_error', 'usage_unavailable'].includes(data.reason)) {
+    invalidateProviderBinary('codex');
+    return fetchCodexUsage(false);
+  }
+  return data;
 }
 
 async function getProviderUsage(provider, force) {
@@ -559,6 +593,8 @@ async function getProviderUsage(provider, force) {
     return cached.data;
   }
   if (aiUsagePending.has(provider)) return aiUsagePending.get(provider);
+
+  if (force) invalidateProviderBinary(provider);
 
   const fetcher = provider === 'claude' ? fetchClaudeUsage : fetchCodexUsage;
   const pending = fetcher()

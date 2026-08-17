@@ -122,6 +122,8 @@ npm start
 - [x] Claude 5-hour and weekly limits via the official Claude CLI `/usage` output
 - [x] Codex limits via the official local app-server rate-limit API
 - [x] Live reset countdowns, warning colors, and manual refresh
+- [x] Automatic CLI re-discovery and retry after Claude/Codex updates
+- [x] Immediate refresh when the app regains focus or network connectivity
 - [x] Show/hide from Settings or the pet/house right-click menu
 - [x] Per-provider toggles without reading auth files or Keychain credentials directly
 
