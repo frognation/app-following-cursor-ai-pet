@@ -9,92 +9,146 @@
   <!-- Pet Container -->
   <div id="pet-container">
     <div id="pet" class="state-idle">
-      <!-- SVG Pet Character "Wooni" -->
-      <svg id="pet-svg" viewBox="0 0 140 150" xmlns="http://www.w3.org/2000/svg">
-        <!-- Tail (behind body) -->
-        <path class="tail" d="M115,80 Q135,60 125,40 Q120,30 130,20" stroke="#7EC8E3" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- Frame-animated SVG Wooni, based on the generated character sheet -->
+      <svg id="pet-svg" viewBox="0 0 190 130" xmlns="http://www.w3.org/2000/svg" aria-label="Wooni, a black cat">
+        <defs>
+          <filter id="ink-wobble" x="-8%" y="-8%" width="116%" height="116%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="8" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.1" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+        </defs>
 
-        <!-- Left Leg -->
-        <g class="leg leg-left">
-          <path d="M35,100 L30,130" stroke="#7EC8E3" stroke-width="7" fill="none" stroke-linecap="round"/>
-          <ellipse cx="30" cy="133" rx="8" ry="5" fill="#5BB0D0"/>
-        </g>
-
-        <!-- Right Leg (front) -->
-        <g class="leg leg-right">
-          <path d="M85,100 L90,130" stroke="#7EC8E3" stroke-width="7" fill="none" stroke-linecap="round"/>
-          <ellipse cx="90" cy="133" rx="8" ry="5" fill="#5BB0D0"/>
-        </g>
-
-        <!-- Body (round cat shape) -->
-        <ellipse class="body" cx="60" cy="78" rx="45" ry="35" fill="#7EC8E3"/>
-        <ellipse class="body-highlight" cx="50" cy="68" rx="25" ry="15" fill="#A8DFF0" opacity="0.6"/>
-
-        <!-- Left Arm -->
-        <g class="arm arm-left">
-          <path d="M18,75 L5,95" stroke="#7EC8E3" stroke-width="6" fill="none" stroke-linecap="round"/>
-          <ellipse cx="4" cy="97" rx="5" ry="4" fill="#5BB0D0"/>
-        </g>
-
-        <!-- Right Arm -->
-        <g class="arm arm-right">
-          <path d="M102,75 L115,95" stroke="#7EC8E3" stroke-width="6" fill="none" stroke-linecap="round"/>
-          <ellipse cx="116" cy="97" rx="5" ry="4" fill="#5BB0D0"/>
-        </g>
-
-        <!-- Left Ear -->
-        <path class="ear ear-left" d="M25,52 Q15,18 42,42" stroke="#7EC8E3" stroke-width="8" fill="#7EC8E3" stroke-linecap="round"/>
-        <path class="ear-inner ear-inner-left" d="M27,49 Q20,24 40,43" stroke="#A8DFF0" stroke-width="3" fill="none" stroke-linecap="round"/>
-
-        <!-- Right Ear -->
-        <path class="ear ear-right" d="M95,52 Q105,18 78,42" stroke="#7EC8E3" stroke-width="8" fill="#7EC8E3" stroke-linecap="round"/>
-        <path class="ear-inner ear-inner-right" d="M93,49 Q100,24 80,43" stroke="#A8DFF0" stroke-width="3" fill="none" stroke-linecap="round"/>
-
-        <!-- Face group (shifts toward walking direction) -->
-        <g class="face-group">
-          <!-- Eyes -->
-          <g class="eyes">
-            <ellipse class="eye eye-left" cx="42" cy="72" rx="6" ry="7" fill="#2C3E50"/>
-            <ellipse class="eye-shine eye-shine-left" cx="44" cy="69" rx="2.5" ry="2.5" fill="white"/>
-            <ellipse class="eye eye-right" cx="78" cy="72" rx="6" ry="7" fill="#2C3E50"/>
-            <ellipse class="eye-shine eye-shine-right" cx="80" cy="69" rx="2.5" ry="2.5" fill="white"/>
-          </g>
-
-          <!-- Closed Eyes (hidden by default, for sleeping) -->
-          <g class="eyes-closed" style="display:none">
-            <path d="M36,72 Q42,77 48,72" stroke="#2C3E50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-            <path d="M72,72 Q78,77 84,72" stroke="#2C3E50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          </g>
-
-          <!-- Dizzy X Eyes (hidden by default) -->
-          <g class="eyes-dizzy" style="display:none">
-            <line x1="36" y1="66" x2="48" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
-            <line x1="48" y1="66" x2="36" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
-            <line x1="72" y1="66" x2="84" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
-            <line x1="84" y1="66" x2="72" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
-          </g>
-
-          <!-- Nose -->
-          <ellipse class="nose" cx="60" cy="80" rx="3" ry="2" fill="#5BB0D0"/>
-
-          <!-- Mouth -->
-          <path class="mouth" d="M52,85 Q60,91 68,85" stroke="#2C3E50" stroke-width="2" fill="none" stroke-linecap="round"/>
-
-          <!-- Whiskers -->
-          <g class="whiskers">
-            <g class="whiskers-left">
-              <line x1="15" y1="75" x2="35" y2="78" stroke="#2C3E50" stroke-width="1.2" opacity="0.4"/>
-              <line x1="15" y1="82" x2="35" y2="82" stroke="#2C3E50" stroke-width="1.2" opacity="0.4"/>
-            </g>
-            <g class="whiskers-right">
-              <line x1="85" y1="78" x2="105" y2="75" stroke="#2C3E50" stroke-width="1.2" opacity="0.4"/>
-              <line x1="85" y1="82" x2="105" y2="82" stroke="#2C3E50" stroke-width="1.2" opacity="0.4"/>
+        <g class="pet-art" filter="url(#ink-wobble)">
+          <!-- Neutral standing -->
+          <g class="cat-pose pose-stand">
+            <path class="cat-tail" d="M54 72 C34 57 35 31 39 10"/>
+            <path class="cat-body" d="M48 70 C50 38 72 28 101 34 C124 38 132 55 130 77 L119 88 L64 89 Z"/>
+            <path class="cat-leg far" d="M71 76 C69 88 69 105 70 119"/>
+            <path class="cat-leg far" d="M113 75 C111 91 112 106 114 120"/>
+            <path class="cat-leg" d="M58 74 C56 91 57 107 58 121"/>
+            <path class="cat-leg" d="M126 72 C126 88 128 106 128 120"/>
+            <g class="face-group">
+              <path class="cat-head" d="M117 59 L119 30 L135 43 L149 30 L151 58 C160 70 151 84 136 85 C118 86 109 72 117 59 Z"/>
+              <g class="eyes">
+                <ellipse cx="131" cy="59" rx="7" ry="10"/><ellipse cx="148" cy="58" rx="7" ry="10"/>
+              </g>
+              <g class="eyes-dizzy">
+                <path d="M126 53 L136 65 M136 53 L126 65 M143 52 L153 64 M153 52 L143 64"/>
+              </g>
+              <path class="cat-nose" d="M158 68 l5 2 -5 3 z"/>
+              <path class="mouth" d="M158 73 Q154 77 151 74"/>
+              <g class="whiskers"><path d="M157 66 L176 62 M158 70 L178 70 M157 74 L175 79"/></g>
             </g>
           </g>
 
-          <!-- Blush -->
-          <ellipse class="blush blush-left" cx="30" cy="82" rx="7" ry="4" fill="#FFB6C1" opacity="0.5"/>
-          <ellipse class="blush blush-right" cx="90" cy="82" rx="7" ry="4" fill="#FFB6C1" opacity="0.5"/>
+          <!-- Slow walk: contact frame -->
+          <g class="cat-pose pose-walk-a">
+            <path class="cat-tail" d="M49 67 C26 52 27 25 34 8"/>
+            <path class="cat-body" d="M43 66 C56 39 84 37 118 50 C128 54 133 66 127 78 C104 83 72 82 49 75 Z"/>
+            <path class="cat-leg far" d="M68 71 Q61 88 49 110"/>
+            <path class="cat-leg far" d="M108 72 Q117 88 128 107"/>
+            <path class="cat-leg" d="M55 70 Q48 87 38 112"/>
+            <path class="cat-leg" d="M118 70 Q132 89 151 108"/>
+            <g class="face-group">
+              <path class="cat-head" d="M116 55 L120 30 L134 43 L148 34 L151 57 C161 68 154 82 139 84 C122 85 111 70 116 55 Z"/>
+              <g class="eyes"><ellipse cx="132" cy="60" rx="7" ry="10"/><ellipse cx="149" cy="60" rx="7" ry="10"/></g>
+              <path class="cat-nose" d="M159 69 l5 2 -5 3 z"/><path class="mouth" d="M159 73 Q155 77 152 74"/>
+              <g class="whiskers"><path d="M157 66 L177 62 M159 70 L179 70 M157 74 L176 80"/></g>
+            </g>
+          </g>
+
+          <!-- Slow walk: passing frame -->
+          <g class="cat-pose pose-walk-b">
+            <path class="cat-tail" d="M48 68 C27 49 28 23 36 7"/>
+            <path class="cat-body" d="M43 65 C56 41 83 39 116 48 C129 52 134 65 128 78 C101 83 69 81 48 75 Z"/>
+            <path class="cat-leg far" d="M67 71 Q71 91 84 108"/>
+            <path class="cat-leg far" d="M109 71 Q101 91 92 111"/>
+            <path class="cat-leg" d="M55 70 Q63 91 75 111"/>
+            <path class="cat-leg" d="M119 70 Q112 90 101 111"/>
+            <g class="face-group">
+              <path class="cat-head" d="M116 54 L121 29 L135 43 L149 34 L151 57 C161 68 154 82 139 84 C122 85 111 69 116 54 Z"/>
+              <g class="eyes"><ellipse cx="132" cy="59" rx="7" ry="10"/><ellipse cx="149" cy="59" rx="7" ry="10"/></g>
+              <path class="cat-nose" d="M159 68 l5 2 -5 3 z"/><path class="mouth" d="M159 72 Q155 76 152 73"/>
+              <g class="whiskers"><path d="M157 65 L177 61 M159 69 L179 69 M157 73 L176 79"/></g>
+            </g>
+          </g>
+
+          <!-- Fast run: stretched frame -->
+          <g class="cat-pose pose-run-stretch">
+            <path class="cat-tail" d="M55 65 C34 55 22 48 9 43"/>
+            <path class="cat-body" d="M42 63 C65 45 103 45 133 61 C139 65 138 76 128 79 C96 83 64 79 40 72 Z"/>
+            <path class="cat-leg far" d="M59 69 Q40 79 20 91"/>
+            <path class="cat-leg far" d="M116 70 Q140 79 169 83"/>
+            <path class="cat-leg" d="M52 67 Q29 72 10 82"/>
+            <path class="cat-leg" d="M124 68 Q146 72 179 75"/>
+            <g class="face-group">
+              <path class="cat-head" d="M125 55 L130 31 L143 44 L157 35 L159 59 C168 70 160 82 146 84 C130 85 120 69 125 55 Z"/>
+              <g class="eyes"><ellipse cx="141" cy="60" rx="7" ry="10"/><ellipse cx="157" cy="60" rx="7" ry="10"/></g>
+              <path class="cat-nose" d="M167 69 l5 2 -5 3 z"/><path class="mouth" d="M167 73 Q163 77 160 74"/>
+              <g class="whiskers"><path d="M165 66 L184 62 M167 70 L187 70 M165 74 L183 79"/></g>
+            </g>
+          </g>
+
+          <!-- Fast run: gathered frame -->
+          <g class="cat-pose pose-run-gather">
+            <path class="cat-tail" d="M61 68 C41 55 29 47 15 49"/>
+            <path class="cat-body" d="M45 72 C48 36 78 25 110 38 C130 46 135 66 122 80 C96 91 65 91 45 72 Z"/>
+            <path class="cat-leg far" d="M64 72 Q70 90 88 102"/>
+            <path class="cat-leg far" d="M109 72 Q99 91 82 104"/>
+            <path class="cat-leg" d="M57 70 Q63 94 79 108"/>
+            <path class="cat-leg" d="M117 69 Q110 94 92 108"/>
+            <g class="face-group">
+              <path class="cat-head" d="M111 51 L116 27 L130 40 L143 31 L146 54 C155 65 149 79 134 81 C117 82 106 66 111 51 Z"/>
+              <g class="eyes"><ellipse cx="127" cy="56" rx="7" ry="10"/><ellipse cx="144" cy="56" rx="7" ry="10"/></g>
+              <path class="cat-nose" d="M154 65 l5 2 -5 3 z"/><path class="mouth" d="M154 69 Q150 73 147 70"/>
+              <g class="whiskers"><path d="M152 62 L172 58 M154 66 L174 66 M152 70 L171 76"/></g>
+            </g>
+          </g>
+
+          <!-- Relaxed loaf -->
+          <g class="cat-pose pose-loaf">
+            <path class="cat-tail" d="M50 93 C27 96 20 108 30 115 C54 120 83 115 99 108"/>
+            <path class="cat-body" d="M46 91 C48 56 77 43 111 54 C132 61 139 83 126 103 C99 115 66 113 44 102 Z"/>
+            <ellipse class="cat-paw-shape" cx="117" cy="108" rx="22" ry="7"/>
+            <ellipse class="cat-paw-shape" cx="83" cy="109" rx="19" ry="6"/>
+            <g class="face-group">
+              <path class="cat-head" d="M103 65 L108 37 L123 51 L139 40 L141 67 C152 79 144 94 127 96 C108 97 97 80 103 65 Z"/>
+              <g class="eyes"><ellipse cx="120" cy="72" rx="7" ry="10"/><ellipse cx="138" cy="71" rx="7" ry="10"/></g>
+              <path class="cat-nose" d="M149 81 l5 2 -5 3 z"/><path class="mouth" d="M149 85 Q145 89 142 86"/>
+              <g class="whiskers"><path d="M147 78 L168 74 M149 82 L170 82 M147 86 L167 92"/></g>
+            </g>
+          </g>
+
+          <!-- Lying awake -->
+          <g class="cat-pose pose-lie">
+            <path class="cat-tail" d="M59 102 C36 104 22 111 16 120"/>
+            <path class="cat-body" d="M45 93 C66 70 104 69 139 89 C151 96 148 108 133 112 C95 116 67 113 42 105 Z"/>
+            <path class="cat-paw" d="M121 104 Q146 107 175 114"/>
+            <path class="cat-paw" d="M115 109 Q139 116 161 122"/>
+            <g class="face-group">
+              <path class="cat-head" d="M40 83 L45 57 L59 70 L74 60 L76 84 C86 95 79 108 64 110 C47 111 35 97 40 83 Z"/>
+              <g class="eyes"><ellipse cx="56" cy="88" rx="7" ry="10"/><ellipse cx="73" cy="87" rx="7" ry="10"/></g>
+              <path class="cat-nose" d="M84 97 l5 2 -5 3 z"/><path class="mouth" d="M84 101 Q80 105 77 102"/>
+              <g class="whiskers"><path d="M82 94 L102 90 M84 98 L105 98 M82 102 L101 108"/></g>
+            </g>
+          </g>
+
+          <!-- Curled sleeping -->
+          <g class="cat-pose pose-sleep">
+            <path class="cat-body" d="M37 96 C35 55 73 29 118 43 C151 53 158 89 137 109 C107 126 61 120 37 96 Z"/>
+            <path class="cat-tail" d="M136 99 C122 119 77 124 43 108"/>
+            <g class="face-group">
+              <path class="cat-head" d="M43 78 L48 51 L62 64 L77 54 L79 80 C89 91 82 104 67 106 C50 107 38 93 43 78 Z"/>
+              <g class="eyes-closed"><path d="M53 84 Q59 91 65 84 M69 83 Q75 90 81 83"/></g>
+              <path class="cat-nose" d="M87 94 l5 2 -5 3 z"/>
+              <g class="whiskers"><path d="M85 91 L104 87 M87 95 L107 95 M85 99 L104 105"/></g>
+            </g>
+            <g class="sleep-zs" aria-hidden="true">
+              <g class="sleep-z sleep-z-1"><text class="sleep-z-letter" x="91" y="80">z</text></g>
+              <g class="sleep-z sleep-z-2"><text class="sleep-z-letter" x="108" y="61">z</text></g>
+              <g class="sleep-z sleep-z-3"><text class="sleep-z-letter" x="126" y="40">z</text></g>
+            </g>
+          </g>
         </g>
       </svg>
 
@@ -121,22 +175,7 @@
 
   <!-- Cat House (숨숨집) - bottom right -->
   <div id="cat-house" class="hidden">
-    <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
-      <!-- House body -->
-      <rect x="10" y="40" width="100" height="55" rx="8" fill="#D4A574"/>
-      <rect x="15" y="45" width="90" height="45" rx="5" fill="#C49464"/>
-      <!-- Roof -->
-      <polygon points="0,42 60,5 120,42" fill="#B07848"/>
-      <polygon points="8,42 60,12 112,42" fill="#C08858"/>
-      <!-- Door opening -->
-      <ellipse cx="60" cy="75" rx="22" ry="20" fill="#4A3520"/>
-      <ellipse cx="60" cy="75" rx="18" ry="16" fill="#3A2510"/>
-      <!-- Cushion inside -->
-      <ellipse cx="60" cy="82" rx="16" ry="6" fill="#FFB6C1" opacity="0.6"/>
-      <!-- Paw prints decoration -->
-      <circle cx="25" cy="55" r="3" fill="#B07848" opacity="0.5"/>
-      <circle cx="95" cy="55" r="3" fill="#B07848" opacity="0.5"/>
-    </svg>
+    <img id="cat-house-image" src="../assets/House.png" alt="Cat house" draggable="false">
     <!-- Speech bubble from house (for notifications while cat is inside) -->
     <div id="house-speech" class="hidden">
       <div id="house-speech-text"></div>

@@ -26,8 +26,10 @@ html, body {
 }
 
 #pet {
-  width: 90px;
-  height: 100px;
+  width: 132px;
+  height: 92px;
+  --walk-cycle: 0.62s;
+  --run-cycle: 0.34s;
   pointer-events: auto;
   cursor: pointer;
   transition: transform 0.1s ease;
@@ -41,6 +43,7 @@ html, body {
 #pet-svg {
   width: 100%;
   height: 100%;
+  overflow: visible;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
 }
 
@@ -728,7 +731,7 @@ html, body {
 #cat-house {
   position: fixed;
   width: 100px;
-  height: 85px;
+  height: 120px;
   z-index: 9998;
   pointer-events: auto;
   cursor: grab;
@@ -739,10 +742,14 @@ html, body {
   transform: scale(1.05);
 }
 
-#cat-house svg {
+#cat-house-image {
+  display: block;
   width: 100%;
   height: 100%;
+  object-fit: contain;
   filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 #cat-house.dragging {
@@ -1152,4 +1159,363 @@ html, body {
 
 .notif-dismiss:hover {
   background: #ddd;
+}
+
+/* ===== Black Cat Character Sheet Animation ===== */
+.pet-art {
+  transform-box: view-box;
+  transform-origin: center;
+  transition: transform 0.12s ease-out;
+}
+
+#pet.facing-left #pet-svg {
+  transform: none;
+}
+
+#pet.facing-left .pet-art {
+  transform: scaleX(-1);
+}
+
+.cat-pose {
+  display: none;
+}
+
+.cat-body,
+.cat-head,
+.cat-paw-shape {
+  fill: #080808;
+  stroke: #020202;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.cat-tail,
+.cat-leg,
+.cat-paw {
+  fill: none;
+  stroke: #080808;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cat-tail { stroke-width: 13; }
+.cat-leg { stroke-width: 14; }
+.cat-paw { stroke-width: 13; }
+.cat-leg.far { opacity: 0.76; }
+
+.cat-pose .eyes ellipse {
+  fill: #0a0a0a;
+  stroke: #fff;
+  stroke-width: 4;
+}
+
+.cat-nose {
+  fill: #fff;
+}
+
+.cat-pose .mouth,
+.cat-pose .whiskers path,
+.cat-pose .eyes-closed path,
+.cat-pose .eyes-dizzy path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cat-pose .eyes-dizzy {
+  display: none;
+}
+
+.state-idle .pose-stand,
+.state-dancing .pose-stand,
+.state-listening .pose-stand,
+.state-talking .pose-stand,
+.state-grabbed .pose-stand,
+.state-flung .pose-stand {
+  display: inline;
+}
+
+.state-walking .pose-walk-a,
+.state-walking .pose-walk-b,
+.state-roaming .pose-walk-a,
+.state-roaming .pose-walk-b {
+  display: inline;
+}
+
+.state-running .pose-run-stretch,
+.state-running .pose-run-gather,
+.state-going-home .pose-run-stretch,
+.state-going-home .pose-run-gather,
+.state-in-house .pose-run-stretch,
+.state-in-house .pose-run-gather {
+  display: inline;
+}
+
+.state-sitting .pose-loaf,
+.state-crouching .pose-loaf {
+  display: inline;
+}
+
+.state-lying .pose-lie {
+  display: inline;
+}
+
+.state-sleeping .pose-sleep {
+  display: inline;
+}
+
+.state-idle #pet-svg {
+  animation: cat-idle-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes cat-idle-breathe {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(-2px) scaleY(0.985); }
+}
+
+.state-idle .pose-stand .cat-tail {
+  animation: cat-tail-curious 2.7s ease-in-out infinite;
+  transform-box: view-box;
+  transform-origin: 54px 72px;
+}
+
+@keyframes cat-tail-curious {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(8deg); }
+}
+
+.state-walking #pet-svg {
+  animation: cat-walk-body var(--walk-cycle) ease-in-out infinite;
+}
+
+@keyframes cat-walk-body {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-2px) rotate(-0.6deg); }
+  50% { transform: translateY(1px) rotate(0deg); }
+  75% { transform: translateY(-2px) rotate(0.6deg); }
+}
+
+.state-walking .pose-walk-a,
+.state-roaming .pose-walk-a {
+  animation: cat-frame-a var(--walk-cycle) steps(1, end) infinite;
+}
+
+.state-walking .pose-walk-b,
+.state-roaming .pose-walk-b {
+  animation: cat-frame-b var(--walk-cycle) steps(1, end) infinite;
+}
+
+@keyframes cat-frame-a {
+  0%, 49.99% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes cat-frame-b {
+  0%, 49.99% { opacity: 0; }
+  50%, 100% { opacity: 1; }
+}
+
+.state-running #pet-svg,
+.state-going-home #pet-svg {
+  animation: cat-run-body var(--run-cycle) ease-in-out infinite;
+}
+
+@keyframes cat-run-body {
+  0%, 100% { transform: translateY(1px) scaleX(1.025) scaleY(0.97); }
+  50% { transform: translateY(-5px) scaleX(0.97) scaleY(1.035); }
+}
+
+.state-running .pose-run-stretch,
+.state-going-home .pose-run-stretch,
+.state-in-house .pose-run-stretch {
+  animation: cat-run-frame-a var(--run-cycle) steps(1, end) infinite;
+}
+
+.state-running .pose-run-gather,
+.state-going-home .pose-run-gather,
+.state-in-house .pose-run-gather {
+  animation: cat-run-frame-b var(--run-cycle) steps(1, end) infinite;
+}
+
+@keyframes cat-run-frame-a {
+  0%, 44.99% { opacity: 1; }
+  45%, 100% { opacity: 0; }
+}
+
+@keyframes cat-run-frame-b {
+  0%, 44.99% { opacity: 0; }
+  45%, 100% { opacity: 1; }
+}
+
+.state-roaming #pet-svg {
+  animation: cat-roam-body 1.15s ease-in-out infinite;
+}
+
+.state-roaming .pose-walk-a,
+.state-roaming .pose-walk-b {
+  animation-duration: 1.15s;
+}
+
+@keyframes cat-roam-body {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+.state-sitting #pet-svg,
+.state-crouching #pet-svg {
+  animation: cat-loaf-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes cat-loaf-breathe {
+  0%, 100% { transform: translateY(1px) scale(1); }
+  50% { transform: translateY(2px) scaleX(1.018) scaleY(0.98); }
+}
+
+.state-lying #pet-svg {
+  animation: cat-lie-breathe 3.8s ease-in-out infinite;
+}
+
+@keyframes cat-lie-breathe {
+  0%, 100% { transform: translateY(4px) rotate(0deg); }
+  50% { transform: translateY(5px) rotate(0.5deg) scaleX(1.012); }
+}
+
+.state-sleeping #pet-svg {
+  animation: cat-sleep-breathe 4.2s ease-in-out infinite;
+}
+
+.state-sleeping.deep-sleep #pet-svg {
+  animation-duration: 6.4s;
+}
+
+.state-sleeping .pose-sleep .cat-body {
+  animation: sleepy-belly-breathe 3.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 55% 85%;
+}
+
+.state-sleeping .pose-sleep .face-group {
+  animation: sleepy-head-bob 3.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 70% 80%;
+}
+
+.state-sleeping .pose-sleep .cat-tail {
+  animation: sleepy-tail-twitch 6.8s ease-in-out infinite;
+  transform-box: view-box;
+  transform-origin: 136px 99px;
+}
+
+@keyframes sleepy-belly-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scaleX(1.035) scaleY(0.985) translateY(1px); }
+}
+
+@keyframes sleepy-head-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(1.5px) rotate(-0.6deg); }
+}
+
+@keyframes sleepy-tail-twitch {
+  0%, 72%, 100% { transform: rotate(0deg); }
+  78% { transform: rotate(2.5deg); }
+  84% { transform: rotate(-1.5deg); }
+  90% { transform: rotate(0deg); }
+}
+
+.sleep-zs {
+  pointer-events: none;
+}
+
+.sleep-z {
+  opacity: 0;
+  animation: sleepy-z-rise 4.2s ease-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.sleep-z-2 { animation-delay: 0.75s; }
+.sleep-z-3 { animation-delay: 1.5s; }
+
+.sleep-z-letter {
+  fill: #596273;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 2.2px;
+  paint-order: stroke fill;
+  font-family: ui-rounded, "SF Pro Rounded", -apple-system, sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+#pet.facing-left .sleep-z-letter {
+  transform: scaleX(-1);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes sleepy-z-rise {
+  0% { opacity: 0; transform: translate(0, 4px) scale(0.72); }
+  16% { opacity: 0.9; }
+  62% { opacity: 0.72; }
+  100% { opacity: 0; transform: translate(-3px, -16px) scale(1.12); }
+}
+
+@keyframes cat-sleep-breathe {
+  0%, 100% { transform: translateY(5px) scale(1); }
+  50% { transform: translateY(6px) scaleX(1.025) scaleY(0.975); }
+}
+
+.state-talking .mouth {
+  animation: cat-mouth-talk 0.38s ease-in-out infinite;
+}
+
+@keyframes cat-mouth-talk {
+  0%, 100% { opacity: 1; stroke-width: 3; }
+  50% { opacity: 0.35; stroke-width: 5; }
+}
+
+.state-grabbed .eyes,
+.state-flung .eyes {
+  display: none;
+}
+
+.state-grabbed .pose-stand .eyes-dizzy,
+.state-flung .pose-stand .eyes-dizzy {
+  display: inline;
+}
+
+.state-grabbed .mouth,
+.state-flung .mouth {
+  display: none;
+}
+
+.state-flung .pose-stand {
+  animation: cat-flail 0.16s ease-in-out infinite alternate;
+  transform-box: view-box;
+  transform-origin: center;
+}
+
+@keyframes cat-flail {
+  from { transform: rotate(-7deg) scaleY(0.95); }
+  to { transform: rotate(7deg) scaleY(1.04); }
+}
+
+.state-in-house #pet-svg {
+  animation: cat-enter-house 0.6s ease-in forwards;
+}
+
+@keyframes cat-enter-house {
+  0% { transform: scale(1); }
+  60% { transform: scale(0.7); }
+  100% { transform: scale(0.4); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #pet-svg,
+  .cat-pose,
+  .cat-tail {
+    animation-duration: 1.4s !important;
+  }
 }

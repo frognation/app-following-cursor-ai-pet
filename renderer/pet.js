@@ -11,7 +11,10 @@ const notifText = document.getElementById('notif-text');
 const PetState = {
   IDLE: 'idle',
   WALKING: 'walking',
+  RUNNING: 'running',
   SITTING: 'sitting',
+  CROUCHING: 'crouching',
+  LYING: 'lying',
   DANCING: 'dancing',
   LISTENING: 'listening',
   TALKING: 'talking',
@@ -24,6 +27,7 @@ const PetState = {
 };
 
 let currentState = PetState.IDLE;
+let isDeepSleeping = false;
 let petX = 400;
 let petY = 400;
 let velocityX = 0;
@@ -31,6 +35,8 @@ let velocityY = 0;
 let lastMoveTime = 0;
 let lastCursorMoveTime = 0;
 let idleTimer = null;
+let crouchTimer = null;
+let lieTimer = null;
 let danceTimer = null;
 let facingLeft = false;
 
@@ -41,6 +47,10 @@ let DAMPING = 0.88;
 const FOLLOW_DISTANCE = 80;
 const STOP_DISTANCE = 30;
 const SLEEP_TIMEOUT = 30000;
+const CROUCH_TIMEOUT = 7000;
+const LIE_TIMEOUT = 16000;
+const RUN_CURSOR_SPEED = 900;
+const RUN_DISTANCE = 300;
 
 // Offset
 const OFFSET_X = 60;
@@ -87,6 +97,22 @@ let houseVelocityY = 0;
 let houseFalling = false;
 const HOUSE_GRAVITY = 0.8;
 
+function renderPetPosition() {
+  const styles = window.getComputedStyle(pet);
+  const width = Number.parseFloat(styles.width) || 132;
+  const height = Number.parseFloat(styles.height) || 92;
+  petContainer.style.left = `${petX - width / 2}px`;
+  petContainer.style.top = `${petY - height / 2}px`;
+}
+
+function getHouseDimensions() {
+  const styles = window.getComputedStyle(catHouse);
+  return {
+    width: Number.parseFloat(styles.width) || 100,
+    height: Number.parseFloat(styles.height) || 120,
+  };
+}
+
 // House shake detection
 let houseShakeHistory = [];
 let houseShakeCount = 0;
@@ -132,20 +158,29 @@ loadPetSettings();
 
 // ===== State Management =====
 function setState(newState) {
-  if (currentState === newState) return;
+  if (currentState === newState) {
+    if (newState === PetState.SLEEPING) {
+      pet.classList.toggle('deep-sleep', isDeepSleeping);
+    }
+    return;
+  }
+  if (currentState === PetState.SLEEPING && isDeepSleeping &&
+      newState !== PetState.IDLE && newState !== PetState.GRABBED) return;
   if (currentState === PetState.DANCING && danceTimer &&
       newState !== PetState.LISTENING && newState !== PetState.TALKING &&
       newState !== PetState.GRABBED) return;
   if (currentState === PetState.FLUNG &&
       newState !== PetState.GRABBED && newState !== PetState.IDLE &&
-      newState !== PetState.WALKING) return;
+      newState !== PetState.WALKING && newState !== PetState.RUNNING) return;
   if (currentState === PetState.IN_HOUSE &&
       newState !== PetState.IDLE && newState !== PetState.WALKING &&
-      newState !== PetState.ROAMING) return;
+      newState !== PetState.RUNNING && newState !== PetState.ROAMING) return;
   if (currentState === PetState.GOING_HOME && newState !== PetState.IN_HOUSE) return;
 
+  if (newState !== PetState.SLEEPING) isDeepSleeping = false;
   currentState = newState;
   pet.className = `state-${newState}`;
+  if (newState === PetState.SLEEPING && isDeepSleeping) pet.classList.add('deep-sleep');
   if (facingLeft) pet.classList.add('facing-left');
 
   // Preserve face shift class
@@ -180,19 +215,50 @@ function setState(newState) {
     }
   }
 
-  if (newState !== PetState.SLEEPING && newState !== PetState.GRABBED &&
+  if (newState !== PetState.SLEEPING && newState !== PetState.CROUCHING &&
+      newState !== PetState.LYING && newState !== PetState.GRABBED &&
       newState !== PetState.FLUNG && newState !== PetState.IN_HOUSE) {
     resetSleepTimer();
   }
 }
 
 function resetSleepTimer() {
+  clearTimeout(crouchTimer);
+  clearTimeout(lieTimer);
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => {
+
+  crouchTimer = setTimeout(() => {
     if (currentState === PetState.IDLE || currentState === PetState.SITTING) {
+      setState(PetState.CROUCHING);
+    }
+  }, CROUCH_TIMEOUT);
+
+  lieTimer = setTimeout(() => {
+    if (currentState === PetState.IDLE || currentState === PetState.SITTING ||
+        currentState === PetState.CROUCHING) {
+      setState(PetState.LYING);
+    }
+  }, LIE_TIMEOUT);
+
+  idleTimer = setTimeout(() => {
+    if (currentState === PetState.IDLE || currentState === PetState.SITTING ||
+        currentState === PetState.CROUCHING || currentState === PetState.LYING) {
+      isDeepSleeping = false;
       setState(PetState.SLEEPING);
     }
   }, SLEEP_TIMEOUT);
+}
+
+function enterDeepSleep() {
+  isDeepSleeping = true;
+  clearTimeout(crouchTimer);
+  clearTimeout(lieTimer);
+  clearTimeout(idleTimer);
+  setState(PetState.SLEEPING);
+}
+
+function shouldWakeFromCursor() {
+  return isRestingState() && !(currentState === PetState.SLEEPING && isDeepSleeping);
 }
 
 // ===== Face direction shift =====
@@ -200,7 +266,8 @@ let currentFaceShift = '';
 
 function updateFaceShift(dx) {
   let newShift = '';
-  if (currentState === PetState.WALKING || currentState === PetState.GOING_HOME || currentState === PetState.ROAMING) {
+  if (currentState === PetState.WALKING || currentState === PetState.RUNNING ||
+      currentState === PetState.GOING_HOME || currentState === PetState.ROAMING) {
     if (dx > 5) newShift = 'face-shift-right';
     else if (dx < -5) newShift = 'face-shift-left';
   }
@@ -226,6 +293,26 @@ let rawCursorX = 400;
 let rawCursorY = 400;
 let cursorStoppedX = 400;
 let cursorStoppedY = 400;
+let cursorSpeed = 0;
+let lastCursorSampleTime = performance.now();
+
+function sampleCursorSpeed(nextX, nextY) {
+  const now = performance.now();
+  const elapsed = Math.max(8, now - lastCursorSampleTime);
+  const distance = Math.hypot(nextX - rawCursorX, nextY - rawCursorY);
+  const instantaneousSpeed = (distance / elapsed) * 1000;
+  cursorSpeed = cursorSpeed * 0.68 + instantaneousSpeed * 0.32;
+  lastCursorSampleTime = now;
+}
+
+function isRestingState(state = currentState) {
+  return state === PetState.SITTING || state === PetState.CROUCHING ||
+    state === PetState.LYING || state === PetState.SLEEPING;
+}
+
+function isLocomotionState(state = currentState) {
+  return state === PetState.WALKING || state === PetState.RUNNING;
+}
 
 async function updateCursorPosition() {
   try {
@@ -233,6 +320,7 @@ async function updateCursorPosition() {
     const relX = pos.x - displayOffset.x;
     const relY = pos.y - displayOffset.y;
     const moved = Math.abs(relX - rawCursorX) > 2 || Math.abs(relY - rawCursorY) > 2;
+    sampleCursorSpeed(relX, relY);
     rawCursorX = relX;
     rawCursorY = relY;
 
@@ -240,7 +328,7 @@ async function updateCursorPosition() {
       lastCursorMoveTime = Date.now();
       cursorStoppedX = relX;
       cursorStoppedY = relY;
-      if (currentState === PetState.SLEEPING) setState(PetState.IDLE);
+      if (shouldWakeFromCursor()) setState(PetState.IDLE);
     }
   } catch (e) {}
 }
@@ -249,6 +337,7 @@ async function updateCursorPosition() {
 
 document.addEventListener('mousemove', (e) => {
   const moved = Math.abs(e.clientX - rawCursorX) > 2 || Math.abs(e.clientY - rawCursorY) > 2;
+  sampleCursorSpeed(e.clientX, e.clientY);
   rawCursorX = e.clientX;
   rawCursorY = e.clientY;
 
@@ -256,7 +345,7 @@ document.addEventListener('mousemove', (e) => {
     lastCursorMoveTime = Date.now();
     cursorStoppedX = e.clientX;
     cursorStoppedY = e.clientY;
-    if (currentState === PetState.SLEEPING) setState(PetState.IDLE);
+    if (shouldWakeFromCursor()) setState(PetState.IDLE);
   }
 
   if (isGrabbed) {
@@ -288,11 +377,21 @@ async function initDisplayBounds() {
 
 if (window.electronAPI.onDisplaysChanged) {
   window.electronAPI.onDisplaysChanged((data) => {
+    const previousRelX = houseAbsX === null ? null : houseAbsX - displayOffset.x;
+    const previousRelY = houseAbsY === null ? null : houseAbsY - displayOffset.y;
     displayOffset = { x: data.bounds.x, y: data.bounds.y };
     displayBounds = { x: 0, y: 0, width: data.bounds.width, height: data.bounds.height };
     petX = displayBounds.width / 2;
     petY = displayBounds.height - 150;
-    // Re-render the house — it stays on its anchored monitor (only visible if we're on it)
+
+    // Keep the house visible when the cursor/app moves to another monitor.
+    if (previousRelX !== null && previousRelY !== null) {
+      const { width, height } = getHouseDimensions();
+      const relX = Math.max(20, Math.min(displayBounds.width - width - 20, previousRelX));
+      const relY = Math.max(20, Math.min(displayBounds.height - height - 20, previousRelY));
+      houseAbsX = displayOffset.x + relX;
+      houseAbsY = displayOffset.y + relY;
+    }
     renderHouseForCurrentDisplay();
   });
 }
@@ -301,45 +400,44 @@ if (window.electronAPI.onDisplaysChanged) {
 // Initialize house at bottom-right of the current (primary) display, in absolute coords
 function initHouseAbsolutePosition() {
   if (houseAbsX !== null) return;
-  houseAbsX = displayOffset.x + displayBounds.width - 130;
-  houseAbsY = displayOffset.y + displayBounds.height - 105;
+  const { width, height } = getHouseDimensions();
+  houseAbsX = displayOffset.x + displayBounds.width - width - 30;
+  houseAbsY = displayOffset.y + displayBounds.height - height - 20;
 }
 
-// Render the house only on its anchored display.
-// If the active window display contains the house's absolute coords, show it; else hide.
+// Render the house on the active display and recover it if stale coordinates put it off-screen.
 function renderHouseForCurrentDisplay() {
   if (houseAbsX === null) initHouseAbsolutePosition();
 
-  const relX = houseAbsX - displayOffset.x;
-  const relY = houseAbsY - displayOffset.y;
+  const { width, height } = getHouseDimensions();
+  let relX = houseAbsX - displayOffset.x;
+  let relY = houseAbsY - displayOffset.y;
 
-  // Check if the house lives on the currently visible display
-  const onThisDisplay =
-    relX >= -10 && relX <= displayBounds.width + 10 &&
-    relY >= -10 && relY <= displayBounds.height + 10;
-
-  if (onThisDisplay) {
-    catHouse.style.left = `${relX}px`;
-    catHouse.style.top = `${relY}px`;
-    catHouse.style.right = 'auto';
-    catHouse.style.bottom = 'auto';
-    houseX = relX + 50; // center of house (window-relative)
-    houseY = relY + 42;
-    catHouse.classList.remove('hidden');
-  } else {
-    catHouse.classList.add('hidden');
-    // Move targeting coords off-screen so pet can't try to walk to them
-    houseX = -9999;
-    houseY = -9999;
+  const isOffScreen = relX < 0 || relY < 0 ||
+    relX + width > displayBounds.width || relY + height > displayBounds.height;
+  if (isOffScreen) {
+    relX = displayBounds.width - width - 30;
+    relY = displayBounds.height - height - 20;
+    houseAbsX = displayOffset.x + relX;
+    houseAbsY = displayOffset.y + relY;
   }
+
+  catHouse.style.left = `${relX}px`;
+  catHouse.style.top = `${relY}px`;
+  catHouse.style.right = 'auto';
+  catHouse.style.bottom = 'auto';
+  houseX = relX + width / 2; // center of house (window-relative)
+  houseY = relY + height / 2;
+  catHouse.classList.remove('hidden');
 }
 
 // Called when the user finishes dragging the house — saves the new anchor position
 function saveHouseAbsolutePosition(relX, relY) {
+  const { width, height } = getHouseDimensions();
   houseAbsX = relX + displayOffset.x;
   houseAbsY = relY + displayOffset.y;
-  houseX = relX + 50;
-  houseY = relY + 42;
+  houseX = relX + width / 2;
+  houseY = relY + height / 2;
 }
 
 // Backwards-compat alias used during init
@@ -354,8 +452,7 @@ function updatePosition() {
   if (isGrabbed) {
     petX = rawCursorX + grabOffsetX;
     petY = rawCursorY + grabOffsetY;
-    petContainer.style.left = `${petX - 40}px`;
-    petContainer.style.top = `${petY - 40}px`;
+    renderPetPosition();
     requestAnimationFrame(updatePosition);
     return;
   }
@@ -363,8 +460,7 @@ function updatePosition() {
   // ---- FLUNG ----
   if (currentState === PetState.FLUNG) {
     if (flingLanded) {
-      petContainer.style.left = `${petX - 40}px`;
-      petContainer.style.top = `${petY - 40}px`;
+      renderPetPosition();
       requestAnimationFrame(updatePosition);
       return;
     }
@@ -387,8 +483,7 @@ function updatePosition() {
 
     pet.style.transform = `rotate(${(performance.now() / 2) % 360}deg)`;
 
-    petContainer.style.left = `${petX - 40}px`;
-    petContainer.style.top = `${petY - 40}px`;
+    renderPetPosition();
 
     const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
     if (speed < 1.5) {
@@ -442,8 +537,7 @@ function updatePosition() {
       petY += velocityY;
     }
 
-    petContainer.style.left = `${petX - 40}px`;
-    petContainer.style.top = `${petY - 40}px`;
+    renderPetPosition();
     requestAnimationFrame(updatePosition);
     return;
   }
@@ -497,41 +591,41 @@ function updatePosition() {
     petX = Math.max(minX, Math.min(maxX, petX));
     petY = Math.min(maxY, petY);
 
-    petContainer.style.left = `${petX - 40}px`;
-    petContainer.style.top = `${petY - 40}px`;
+    renderPetPosition();
     requestAnimationFrame(updatePosition);
     return;
   }
 
   // ---- Non-interactive states ----
-  if (currentState === PetState.DANCING || currentState === PetState.LISTENING || currentState === PetState.TALKING) {
+  if (currentState === PetState.DANCING || currentState === PetState.LISTENING ||
+      currentState === PetState.TALKING || currentState === PetState.CROUCHING ||
+      currentState === PetState.LYING || currentState === PetState.SLEEPING) {
     requestAnimationFrame(updatePosition);
     return;
   }
 
   // ---- FOLLOW DELAY: 0.5s delay to START following, but once walking, track real-time ----
   const timeSinceCursorMove = Date.now() - lastCursorMoveTime;
-  const isAlreadyWalking = currentState === PetState.WALKING;
-  const shouldFollow = isAlreadyWalking || timeSinceCursorMove >= FOLLOW_DELAY;
+  const isAlreadyMoving = isLocomotionState();
+  const shouldFollow = isAlreadyMoving || timeSinceCursorMove >= FOLLOW_DELAY;
 
   let goal;
   if (isApproached) {
     goal = { x: rawCursorX, y: rawCursorY };
   } else if (shouldFollow) {
-    const targetX = isAlreadyWalking ? rawCursorX : cursorStoppedX;
-    const targetY = isAlreadyWalking ? rawCursorY : cursorStoppedY;
+    const targetX = isAlreadyMoving ? rawCursorX : cursorStoppedX;
+    const targetY = isAlreadyMoving ? rawCursorY : cursorStoppedY;
     goal = getOffsetTarget(targetX, targetY);
   } else {
     velocityX *= 0.95;
     velocityY *= 0.95;
     petX += velocityX;
     petY += velocityY;
-    if (currentState === PetState.WALKING) {
+    if (isLocomotionState()) {
       setState(PetState.IDLE);
       updateFaceShift(0);
     }
-    petContainer.style.left = `${petX - 40}px`;
-    petContainer.style.top = `${petY - 40}px`;
+    renderPetPosition();
     requestAnimationFrame(updatePosition);
     return;
   }
@@ -558,25 +652,31 @@ function updatePosition() {
     velocityY = (velocityY + ay) * DAMPING;
     petX += velocityX;
     petY += velocityY;
-    if (currentState !== PetState.WALKING) setState(PetState.WALKING);
+
+    const movementSpeed = Math.hypot(velocityX, velocityY);
+    const shouldRun = cursorSpeed >= RUN_CURSOR_SPEED || distance >= RUN_DISTANCE;
+    const nextState = shouldRun ? PetState.RUNNING : PetState.WALKING;
+    if (currentState !== nextState) setState(nextState);
+
+    const walkCycle = Math.max(0.42, Math.min(0.82, 0.9 - movementSpeed * 0.055));
+    const runCycle = Math.max(0.24, Math.min(0.4, 0.43 - movementSpeed * 0.018));
+    pet.style.setProperty('--walk-cycle', `${walkCycle}s`);
+    pet.style.setProperty('--run-cycle', `${runCycle}s`);
   } else if (distance < STOP_DISTANCE) {
     velocityX *= 0.9;
     velocityY *= 0.9;
     petX += velocityX;
     petY += velocityY;
     updateFaceShift(0);
-    if (currentState === PetState.WALKING) {
-      setState(PetState.SITTING);
-      setTimeout(() => {
-        if (currentState === PetState.SITTING) setState(PetState.IDLE);
-      }, 2000);
+    if (isLocomotionState()) {
+      setState(PetState.IDLE);
     }
   } else {
     velocityX *= 0.95;
     velocityY *= 0.95;
     petX += velocityX;
     petY += velocityY;
-    if (currentState === PetState.WALKING) {
+    if (isLocomotionState()) {
       setState(PetState.IDLE);
       updateFaceShift(0);
     }
@@ -591,8 +691,7 @@ function updatePosition() {
   petX = Math.max(minX, Math.min(maxX, petX));
   petY = Math.max(minY, Math.min(maxY, petY));
 
-  petContainer.style.left = `${petX - 40}px`;
-  petContainer.style.top = `${petY - 40}px`;
+  renderPetPosition();
 
   requestAnimationFrame(updatePosition);
 }
@@ -773,8 +872,7 @@ function flingPetFromHouse(intensity) {
   const houseRect = catHouse.getBoundingClientRect();
   petX = houseRect.left + houseRect.width / 2;
   petY = houseRect.top + houseRect.height / 2;
-  petContainer.style.left = `${petX - 40}px`;
-  petContainer.style.top = `${petY - 40}px`;
+  renderPetPosition();
 
   // Fling direction: use last shake direction, with upward bias
   let flingVX = 0;
@@ -822,7 +920,8 @@ document.addEventListener('mouseup', (e) => {
     houseVelocityY += HOUSE_GRAVITY;
     currentHouseY += houseVelocityY;
 
-    const maxY = displayBounds.height - 85 - 20; // house height + margin
+    const houseHeight = houseRect.height || getHouseDimensions().height;
+    const maxY = displayBounds.height - houseHeight - 20;
     if (currentHouseY >= maxY) {
       currentHouseY = maxY;
       houseVelocityY = -houseVelocityY * 0.3; // small bounce
@@ -868,9 +967,10 @@ if (window.electronAPI.onPetAction) {
         triggerDance();
         break;
       case 'sleep':
-        setState(PetState.SLEEPING);
+        enterDeepSleep();
         break;
       case 'wake':
+        isDeepSleeping = false;
         if (isInHouse) letPetOut();
         else if (isRoaming) stopRoaming();
         else setState(PetState.IDLE);
@@ -906,8 +1006,7 @@ function letPetOut() {
   // Position pet at house location, offset slightly to the side
   petX = houseX - 60;
   petY = houseY;
-  petContainer.style.left = `${petX - 40}px`;
-  petContainer.style.top = `${petY - 40}px`;
+  renderPetPosition();
 
   // Reset state — will start following cursor
   currentState = null;
@@ -942,8 +1041,7 @@ function startRoaming() {
       setState(PetState.ROAMING);
       startRoamBehavior();
     }
-    petContainer.style.left = `${petX - 40}px`;
-    petContainer.style.top = `${petY - 40}px`;
+    renderPetPosition();
   }, 16);
 }
 
@@ -1011,6 +1109,7 @@ function stopRoaming() {
 let grabStartTime = 0;
 let grabDelayTimer = null;
 let pendingGrabEvent = null;
+let isDraggingDeepSleepingPet = false;
 
 let tapCount = 0;
 let tapTimer = null;
@@ -1021,6 +1120,8 @@ pet.addEventListener('mousedown', (e) => {
   if (e.button === 2) return;
   e.stopPropagation();
   e.preventDefault();
+
+  isDraggingDeepSleepingPet = currentState === PetState.SLEEPING && isDeepSleeping;
 
   if (currentState === PetState.FLUNG) {
     clearTimeout(flingReturnTimer);
@@ -1053,7 +1154,7 @@ pet.addEventListener('mousedown', (e) => {
       isGrabbed = true;
       grabOffsetX = petX - pendingGrabEvent.x;
       grabOffsetY = petY - pendingGrabEvent.y;
-      setState(PetState.GRABBED);
+      if (!isDraggingDeepSleepingPet) setState(PetState.GRABBED);
       pendingGrabEvent = null;
       clearTimeout(longPressTimer); // Cancel roam if grabbed
     }
@@ -1068,6 +1169,7 @@ document.addEventListener('mouseup', (e) => {
     pendingGrabEvent = null;
     mouseHistory = [];
     handleTap();
+    isDraggingDeepSleepingPet = false;
     return;
   }
 
@@ -1079,15 +1181,15 @@ document.addEventListener('mouseup', (e) => {
 
   // Check if pet was dropped on the cat house
   const houseRect = catHouse.getBoundingClientRect();
-  if (petX > houseRect.left && petX < houseRect.right &&
+  if (!isDraggingDeepSleepingPet &&
+      petX > houseRect.left && petX < houseRect.right &&
       petY > houseRect.top && petY < houseRect.bottom) {
     // Drop pet into house!
     velocityX = 0;
     velocityY = 0;
     petX = houseX;
     petY = houseY;
-    petContainer.style.left = `${petX - 40}px`;
-    petContainer.style.top = `${petY - 40}px`;
+    renderPetPosition();
     setState(PetState.IN_HOUSE);
     mouseHistory = [];
     return;
@@ -1107,19 +1209,26 @@ document.addEventListener('mouseup', (e) => {
   const flingSpeed = Math.sqrt(flingVX * flingVX + flingVY * flingVY);
 
   if (flingSpeed > FLING_SPEED_THRESHOLD) {
+    isDeepSleeping = false;
     velocityX = flingVX * 1.5;
     velocityY = flingVY * 1.5;
     setState(PetState.FLUNG);
     showSpeech(t('flung'), 2000);
-  } else {
+  } else if (!isDraggingDeepSleepingPet) {
     setState(PetState.IDLE);
+    isApproached = false;
+  } else {
+    velocityX = 0;
+    velocityY = 0;
     isApproached = false;
   }
 
+  isDraggingDeepSleepingPet = false;
   mouseHistory = [];
 });
 
 function handleTap() {
+  if (isDeepSleeping) return;
   tapCount++;
   if (tapCount === 1) {
     tapTimer = setTimeout(() => {
@@ -1321,8 +1430,7 @@ async function initPet() {
   cursorStoppedY = petY - OFFSET_Y;
   lastCursorMoveTime = 0;
 
-  petContainer.style.left = `${petX - 40}px`;
-  petContainer.style.top = `${petY - 40}px`;
+  renderPetPosition();
 
   updateHousePosition();
 
@@ -1345,6 +1453,7 @@ window.lastSpeechResponse = () => lastSpeechResponse;
 window.showFloatingNotification = showFloatingNotification;
 window.isInHouse = () => isInHouse;
 window.isRoaming = () => isRoaming;
+window.isDeepSleeping = () => isDeepSleeping;
 
 let isChatOpen = false;
 window.setIsChatOpen = (v) => { isChatOpen = v; };

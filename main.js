@@ -137,7 +137,7 @@ ipcMain.on('show-context-menu', (event, menuData) => {
       click: () => { mainWindow.webContents.send('pet-action', 'dance'); },
     },
     {
-      label: menuData.sleepLabel || 'Sleep',
+      label: menuData.sleepLabel || 'Deep Sleep',
       click: () => { mainWindow.webContents.send('pet-action', 'sleep'); },
     },
     {
