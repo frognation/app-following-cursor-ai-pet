@@ -303,9 +303,11 @@ ipcMain.on('open-settings', () => {
 const AI_USAGE_CACHE_MS = 45000;
 const aiUsageCache = new Map();
 const aiUsagePending = new Map();
+const resolvedBinaries = new Map();
 
 function resolveCliBinary(name) {
-  if (!['claude', 'codex'].includes(name)) return null;
+  if (!['claude', 'codex', 'node'].includes(name)) return null;
+  if (resolvedBinaries.has(name)) return resolvedBinaries.get(name);
 
   const home = os.homedir();
   const candidates = [
@@ -322,6 +324,7 @@ function resolveCliBinary(name) {
   for (const candidate of candidates) {
     try {
       fs.accessSync(candidate, fs.constants.X_OK);
+      resolvedBinaries.set(name, candidate);
       return candidate;
     } catch (e) {}
   }
@@ -336,11 +339,23 @@ function resolveCliBinary(name) {
     const resolved = (result.stdout || '').trim().split('\n').pop();
     if (resolved) {
       fs.accessSync(resolved, fs.constants.X_OK);
+      resolvedBinaries.set(name, resolved);
       return resolved;
     }
   } catch (e) {}
 
+  resolvedBinaries.set(name, null);
   return null;
+}
+
+function getCliEnvironment(binary) {
+  const nodeBinary = resolveCliBinary('node');
+  const pathEntries = [
+    path.dirname(binary),
+    nodeBinary ? path.dirname(nodeBinary) : null,
+    process.env.PATH,
+  ].filter(Boolean);
+  return { ...process.env, PATH: pathEntries.join(path.delimiter) };
 }
 
 function runCommand(binary, args, timeoutMs) {
@@ -349,7 +364,7 @@ function runCommand(binary, args, timeoutMs) {
     let stderr = '';
     let settled = false;
     const child = spawn(binary, args, {
-      env: { ...process.env },
+      env: getCliEnvironment(binary),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
@@ -458,7 +473,7 @@ async function fetchCodexUsage() {
 
   return new Promise((resolve) => {
     const child = spawn(binary, ['app-server', '--stdio'], {
-      env: { ...process.env },
+      env: getCliEnvironment(binary),
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     let buffer = '';
