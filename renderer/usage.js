@@ -14,6 +14,7 @@ const usageSettings = {
 let usageRefreshTimer = null;
 let usageCountdownTimer = null;
 let usageRefreshInFlight = false;
+let usageRefreshQueued = false;
 let lastUsageData = null;
 
 const PROVIDERS = {
@@ -119,7 +120,11 @@ function updateUsagePanelAlignment() {
 }
 
 async function refreshAiUsage(force = false) {
-  if (usageRefreshInFlight || !usageSettings.usageEnabled) return;
+  if (usageRefreshInFlight) {
+    if (force) usageRefreshQueued = true;
+    return;
+  }
+  if (!usageSettings.usageEnabled) return;
   const providers = enabledUsageProviders();
   if (providers.length === 0) return;
 
@@ -139,6 +144,10 @@ async function refreshAiUsage(force = false) {
     usageRefreshInFlight = false;
     aiUsageRefresh.classList.remove('refreshing');
     renderUsagePanel();
+    if (usageRefreshQueued) {
+      usageRefreshQueued = false;
+      setTimeout(() => refreshAiUsage(true), 0);
+    }
   }
 }
 
@@ -210,6 +219,12 @@ if (window.electronAPI.onPetAction) {
 }
 
 window.isAiUsageEnabled = () => usageSettings.usageEnabled;
+
+window.addEventListener('focus', () => refreshAiUsage(true));
+window.addEventListener('online', () => refreshAiUsage(true));
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) refreshAiUsage(true);
+});
 
 setInterval(updateUsagePanelAlignment, 250);
 loadUsageSettings();
