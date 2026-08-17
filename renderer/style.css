@@ -54,6 +54,11 @@ html, body {
 .leg-left { transform-origin: 35px 100px; }
 .leg-right { transform-origin: 85px 100px; }
 
+/* Face group for directional shifting */
+.face-group {
+  transition: transform 0.4s ease;
+}
+
 /* ===== Idle Animation ===== */
 .state-idle #pet-svg {
   animation: idle-bounce 2.5s ease-in-out infinite;
@@ -86,49 +91,153 @@ html, body {
   50% { transform: rotate(3deg); }
 }
 
-/* ===== Walking Animation ===== */
+/* ===== Walking Animation (Realistic 4-phase gait) ===== */
 .state-walking #pet-svg {
-  animation: walk-bounce 0.5s ease-in-out infinite;
+  animation: walk-bounce 0.7s ease-in-out infinite;
 }
 
 @keyframes walk-bounce {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-3px) rotate(-2deg); }
-  75% { transform: translateY(-3px) rotate(2deg); }
+  15% { transform: translateY(-4px) rotate(-1.5deg); }
+  35% { transform: translateY(0) rotate(0deg); }
+  65% { transform: translateY(-4px) rotate(1.5deg); }
+  85% { transform: translateY(0) rotate(0deg); }
 }
 
 .state-walking .tail {
-  animation: tail-wag-fast 0.5s ease-in-out infinite;
+  animation: tail-wag-walk 0.7s ease-in-out infinite;
   transform-origin: 115px 80px;
 }
 
-@keyframes tail-wag-fast {
-  0%, 100% { transform: rotate(-5deg); }
-  50% { transform: rotate(15deg); }
+@keyframes tail-wag-walk {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(12deg); }
 }
 
+/* Front legs: diagonal gait pattern */
 .state-walking .leg-left {
-  animation: walk-leg 0.5s ease-in-out infinite;
+  animation: walk-leg-front-left 0.7s ease-in-out infinite;
 }
 .state-walking .leg-right {
-  animation: walk-leg 0.5s ease-in-out infinite 0.25s;
+  animation: walk-leg-front-right 0.7s ease-in-out infinite;
 }
 
-@keyframes walk-leg {
+@keyframes walk-leg-front-left {
+  0%   { transform: rotate(12deg) translateY(0); }
+  25%  { transform: rotate(-15deg) translateY(-4px); }  /* lift & swing forward */
+  35%  { transform: rotate(-12deg) translateY(0); }     /* plant */
+  50%  { transform: rotate(-8deg) translateY(0); }      /* push back */
+  75%  { transform: rotate(8deg) translateY(0); }       /* follow through */
+  100% { transform: rotate(12deg) translateY(0); }
+}
+
+@keyframes walk-leg-front-right {
+  0%   { transform: rotate(-12deg) translateY(0); }
+  25%  { transform: rotate(8deg) translateY(0); }
+  50%  { transform: rotate(12deg) translateY(0); }
+  75%  { transform: rotate(-15deg) translateY(-4px); }
+  85%  { transform: rotate(-12deg) translateY(0); }
+  100% { transform: rotate(-12deg) translateY(0); }
+}
+
+/* Arms sway opposite to legs */
+.state-walking .arm-left {
+  animation: walk-arm-left 0.7s ease-in-out infinite;
+}
+.state-walking .arm-right {
+  animation: walk-arm-right 0.7s ease-in-out infinite;
+}
+
+@keyframes walk-arm-left {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(-10deg); }
+}
+
+@keyframes walk-arm-right {
   0%, 100% { transform: rotate(-10deg); }
   50% { transform: rotate(10deg); }
 }
 
-.state-walking .arm-left {
-  animation: walk-arm 0.5s ease-in-out infinite 0.25s;
+/* Ears bob with steps */
+.state-walking .ear-left {
+  animation: walk-ear 0.7s ease-in-out infinite;
+  transform-origin: 32px 45px;
 }
-.state-walking .arm-right {
-  animation: walk-arm 0.5s ease-in-out infinite;
+.state-walking .ear-right {
+  animation: walk-ear 0.7s ease-in-out infinite 0.35s;
+  transform-origin: 88px 45px;
 }
 
-@keyframes walk-arm {
-  0%, 100% { transform: rotate(8deg); }
-  50% { transform: rotate(-8deg); }
+@keyframes walk-ear {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-3deg); }
+}
+
+/* Whiskers bounce while walking */
+.state-walking .whiskers-left {
+  animation: whisker-left-walk 0.7s ease-in-out infinite;
+  transform-origin: 35px 80px;
+}
+.state-walking .whiskers-right {
+  animation: whisker-right-walk 0.7s ease-in-out infinite;
+  transform-origin: 85px 80px;
+}
+
+@keyframes whisker-left-walk {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-2deg); }
+}
+
+@keyframes whisker-right-walk {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(2deg); }
+}
+
+/* ===== Face shift classes (applied via JS) ===== */
+.face-shift-right .face-group {
+  transform: translateX(3px);
+}
+.face-shift-left .face-group {
+  transform: translateX(-3px);
+}
+
+.face-shift-right .whiskers-right {
+  transform: translateX(2px);
+}
+.face-shift-right .whiskers-left {
+  transform: translateX(1px);
+}
+.face-shift-left .whiskers-left {
+  transform: translateX(-2px);
+}
+.face-shift-left .whiskers-right {
+  transform: translateX(-1px);
+}
+
+/* Ears tilt toward walking direction */
+.face-shift-right .ear-right {
+  transform: rotate(3deg);
+  transform-origin: 88px 45px;
+}
+.face-shift-right .ear-left {
+  transform: rotate(2deg);
+  transform-origin: 32px 45px;
+}
+.face-shift-left .ear-left {
+  transform: rotate(-3deg);
+  transform-origin: 32px 45px;
+}
+.face-shift-left .ear-right {
+  transform: rotate(-2deg);
+  transform-origin: 88px 45px;
+}
+
+/* Tail direction */
+.face-shift-right .tail {
+  transform-origin: 115px 80px;
+}
+.face-shift-left .tail {
+  transform-origin: 115px 80px;
 }
 
 /* ===== Sitting Animation ===== */
@@ -192,6 +301,16 @@ html, body {
   50% { transform: rotate(5deg); }
 }
 
+.state-dancing .tail {
+  animation: dance-tail 0.3s ease-in-out infinite;
+  transform-origin: 115px 80px;
+}
+
+@keyframes dance-tail {
+  0%, 100% { transform: rotate(-15deg); }
+  50% { transform: rotate(15deg); }
+}
+
 .state-dancing .blush-left,
 .state-dancing .blush-right {
   animation: blush-pulse 0.5s ease-in-out infinite;
@@ -205,18 +324,20 @@ html, body {
 /* ===== Listening Animation ===== */
 .state-listening .ear-left {
   animation: ear-perk-left 0.6s ease-out forwards;
+  transform-origin: 32px 45px;
 }
 
 .state-listening .ear-right {
   animation: ear-perk-right 0.6s ease-out forwards;
+  transform-origin: 88px 45px;
 }
 
 @keyframes ear-perk-left {
-  to { transform: rotate(-15deg) translateY(-5px); transform-origin: 32px 45px; }
+  to { transform: rotate(-15deg) translateY(-5px); }
 }
 
 @keyframes ear-perk-right {
-  to { transform: rotate(15deg) translateY(-5px); transform-origin: 88px 45px; }
+  to { transform: rotate(15deg) translateY(-5px); }
 }
 
 .state-listening #pet-svg {
@@ -453,7 +574,7 @@ html, body {
   50% { transform: scaleY(1.2); }
 }
 
-/* ===== Speech Bubble ===== */
+/* ===== Speech Bubble (wider, better scroll) ===== */
 #speech-bubble {
   position: absolute;
   bottom: calc(100% + 10px);
@@ -461,10 +582,10 @@ html, body {
   transform: translateX(-50%);
   background: white;
   border-radius: 16px;
-  padding: 12px 16px;
-  max-width: 300px;
-  min-width: 60px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  padding: 14px 18px;
+  max-width: 480px;
+  min-width: 120px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
   pointer-events: auto;
   animation: bubble-in 0.3s ease-out;
   z-index: 10000;
@@ -475,13 +596,39 @@ html, body {
   to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 
+#speech-content {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #c0c0c0 transparent;
+}
+
+#speech-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+#speech-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#speech-content::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 3px;
+}
+
+#speech-content::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
 #speech-text {
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
   color: #333;
   word-wrap: break-word;
-  max-height: 200px;
-  overflow-y: auto;
+  white-space: pre-wrap;
 }
 
 .speech-arrow {
@@ -494,6 +641,31 @@ html, body {
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
   border-top: 8px solid white;
+}
+
+/* Speech action buttons */
+#speech-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  justify-content: flex-end;
+}
+
+#speech-actions button {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+#speech-actions button:hover {
+  background: #f0f0f0;
+  border-color: #bbb;
 }
 
 /* ===== Chat Container ===== */
@@ -511,7 +683,7 @@ html, body {
   padding: 8px 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.2);
   animation: chat-slide-in 0.3s ease-out;
-  min-width: 280px;
+  min-width: 320px;
 }
 
 @keyframes chat-slide-in {
@@ -552,22 +724,432 @@ html, body {
   background: #5BB0D0;
 }
 
-/* ===== Settings Button ===== */
-#settings-btn {
+/* ===== Cat House (숨숨집) ===== */
+#cat-house {
   position: fixed;
+  width: 100px;
+  height: 85px;
+  z-index: 9998;
   pointer-events: auto;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  cursor: pointer;
-  opacity: 0.4;
-  transition: opacity 0.2s;
+  cursor: grab;
+  transition: transform 0.2s ease;
+}
+
+#cat-house:hover {
+  transform: scale(1.05);
+}
+
+#cat-house svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.2));
+}
+
+#cat-house.dragging {
+  opacity: 0.85;
+  cursor: grabbing;
+}
+
+#cat-house.has-pet {
+  animation: house-wiggle 3s ease-in-out infinite;
+}
+
+@keyframes house-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-0.5deg); }
+  75% { transform: rotate(0.5deg); }
+}
+
+#cat-house.shaking {
+  animation: house-shake 0.1s ease-in-out infinite alternate;
+}
+
+@keyframes house-shake {
+  0% { transform: translateX(-3px) rotate(-2deg); }
+  100% { transform: translateX(3px) rotate(2deg); }
+}
+
+#cat-house.pet-entering {
   z-index: 10000;
 }
 
-#settings-btn:hover {
-  opacity: 1;
+#cat-house.house-disappearing {
+  animation: house-poof-out 0.4s ease-in forwards;
+}
+
+@keyframes house-poof-out {
+  0% { transform: scale(1) rotate(0deg); opacity: 1; }
+  40% { transform: scale(1.2) rotate(-5deg); opacity: 0.9; }
+  100% { transform: scale(0) rotate(15deg); opacity: 0; }
+}
+
+#cat-house.house-appearing {
+  animation: house-poof-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes house-poof-in {
+  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Pet poof animations (when house toggle hides/shows pet too) */
+#pet-container.pet-disappearing #pet {
+  animation: pet-poof-out 0.4s ease-in forwards;
+}
+
+@keyframes pet-poof-out {
+  0% { transform: scale(1) rotate(0deg); opacity: 1; }
+  40% { transform: scale(1.2) rotate(8deg); opacity: 0.9; }
+  100% { transform: scale(0) rotate(-15deg); opacity: 0; }
+}
+
+#pet-container.pet-appearing #pet {
+  animation: pet-poof-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes pet-poof-in {
+  0% { transform: scale(0) rotate(15deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(-5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* House speech bubble */
+#house-speech {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 12px;
+  padding: 10px 14px;
+  max-width: 280px;
+  min-width: 80px;
+  box-shadow: 0 3px 16px rgba(0,0,0,0.15);
+  font-size: 12px;
+  line-height: 1.5;
+  color: #333;
+  animation: bubble-in 0.3s ease-out;
+  z-index: 10000;
+  pointer-events: auto;
+}
+
+#house-speech .speech-arrow {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid white;
+}
+
+/* ===== Paid AI CLI Usage ===== */
+#ai-usage-panel {
+  position: absolute;
+  right: calc(100% + 10px);
+  bottom: 8px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: max-content;
+  max-width: min(680px, calc(100vw - 130px));
+  padding: 0 7px 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  background: rgba(24, 24, 26, 0.94);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.28);
+  color: #f6f6f7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  cursor: default;
+  pointer-events: auto;
+  z-index: 10002;
+  transform-origin: right center;
+  animation: usage-panel-in 0.22s ease-out;
+}
+
+#ai-usage-panel.place-right {
+  right: auto;
+  left: calc(100% + 10px);
+  transform-origin: left center;
+}
+
+@keyframes usage-panel-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#ai-usage-providers,
+.ai-usage-provider,
+.ai-provider-values,
+.ai-usage-window {
+  display: flex;
+  align-items: center;
+}
+
+#ai-usage-providers {
+  gap: 10px;
+  min-width: 0;
+}
+
+.ai-usage-provider {
+  gap: 7px;
+}
+
+.ai-provider-values {
+  gap: 7px;
+}
+
+.ai-provider-mark {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.ai-provider-mark.claude {
+  color: #e8794f;
+}
+
+.ai-provider-mark.codex {
+  color: #d7f5e5;
+  font-size: 21px;
+}
+
+.ai-usage-window {
+  gap: 4px;
+}
+
+.ai-usage-window strong {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.ai-usage-window.warning strong {
+  color: #ffd166;
+}
+
+.ai-usage-window.critical strong {
+  color: #ff7b72;
+}
+
+.ai-usage-used,
+.ai-usage-remaining,
+.ai-usage-divider,
+.ai-usage-unavailable {
+  color: #c8c8cc;
+}
+
+.ai-usage-remaining {
+  color: #f0f0f2;
+}
+
+.ai-usage-divider {
+  opacity: 0.55;
+}
+
+.ai-provider-separator {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.ai-usage-unavailable {
+  font-size: 11px;
+}
+
+.ai-usage-loading-dot {
+  width: 6px;
+  height: 6px;
+  margin: 0 12px 0 3px;
+  border-radius: 50%;
+  background: #8d8d92;
+  animation: usage-loading-pulse 1s ease-in-out infinite;
+}
+
+@keyframes usage-loading-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+#ai-usage-refresh {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #aaaab0;
+  font: 19px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+#ai-usage-refresh:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#ai-usage-refresh.refreshing {
+  animation: usage-refresh-spin 0.8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes usage-refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== Going Home Animation ===== */
+.state-going-home #pet-svg {
+  animation: walk-bounce 0.5s ease-in-out infinite;
+}
+
+.state-going-home .tail {
+  animation: tail-wag-walk 0.5s ease-in-out infinite;
+  transform-origin: 115px 80px;
+}
+
+.state-going-home .leg-left {
+  animation: walk-leg-front-left 0.5s ease-in-out infinite;
+}
+.state-going-home .leg-right {
+  animation: walk-leg-front-right 0.5s ease-in-out infinite;
+}
+
+/* ===== In House (walk behind house, z-index hides pet) ===== */
+.state-in-house #pet-svg {
+  animation: walk-behind-house 0.6s ease-in forwards;
+}
+
+@keyframes walk-behind-house {
+  0% { transform: scale(1); }
+  60% { transform: scale(0.7); }
+  100% { transform: scale(0.4); opacity: 0; }
+}
+
+/* ===== Roaming Animation ===== */
+.state-roaming #pet-svg {
+  animation: roam-bounce 2s ease-in-out infinite;
+}
+
+@keyframes roam-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.state-roaming .tail {
+  animation: tail-wag-slow 2.5s ease-in-out infinite;
+  transform-origin: 115px 80px;
+}
+
+.state-roaming .leg-left {
+  animation: walk-leg-front-left 1.2s ease-in-out infinite;
+}
+.state-roaming .leg-right {
+  animation: walk-leg-front-right 1.2s ease-in-out infinite;
+}
+
+.state-roaming .arm-left {
+  animation: idle-arm-sway 2.5s ease-in-out infinite;
+}
+.state-roaming .arm-right {
+  animation: idle-arm-sway 2.5s ease-in-out infinite 0.3s;
+}
+
+/* ===== Floating Notification ===== */
+#floating-notification {
+  position: fixed;
+  z-index: 10002;
+  pointer-events: auto;
+  background: white;
+  border-radius: 16px;
+  padding: 14px 18px;
+  max-width: 360px;
+  min-width: 200px;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.22);
+  animation: notif-bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: left 0.3s ease, top 0.3s ease;
+}
+
+@keyframes notif-bounce-in {
+  from { opacity: 0; transform: scale(0.7) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+#notif-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 10px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+#notif-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.notif-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.notif-btn:hover {
+  transform: scale(1.05);
+}
+
+.notif-btn:active {
+  transform: scale(0.95);
+}
+
+.notif-show {
+  background: #7EC8E3;
+  color: white;
+}
+
+.notif-show:hover {
+  background: #5BB0D0;
+}
+
+.notif-later {
+  background: #FFD700;
+  color: #333;
+}
+
+.notif-later:hover {
+  background: #FFC800;
+}
+
+.notif-dismiss {
+  background: #eee;
+  color: #666;
+}
+
+.notif-dismiss:hover {
+  background: #ddd;
 }

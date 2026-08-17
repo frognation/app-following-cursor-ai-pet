@@ -4,11 +4,10 @@ const chatContainer = document.getElementById('chat-container');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
 
-let isChatOpen = false;
 let isProcessing = false;
 
 function toggleChat() {
-  if (isChatOpen) {
+  if (window.isChatOpen || chatContainer.classList.contains('hidden') === false) {
     closeChat();
   } else {
     openChat();
@@ -16,25 +15,24 @@ function toggleChat() {
 }
 
 function openChat() {
-  isChatOpen = true;
+  window.setIsChatOpen(true);
   chatContainer.classList.remove('hidden');
 
   // Position chat below pet
   const petRect = document.getElementById('pet-container');
-  const left = parseInt(petRect.style.left) || window.innerWidth / 2 - 40;
-  const top = parseInt(petRect.style.top) || window.innerHeight - 150;
+  const left = parseInt(petRect.style.left) || 400;
+  const top = parseInt(petRect.style.top) || 400;
 
   chatContainer.style.left = `${Math.max(10, left - 100)}px`;
   chatContainer.style.top = `${top + 90}px`;
 
-  // Make area clickable
   window.electronAPI.setIgnoreMouse(false);
-
+  chatInput.placeholder = t('chatPlaceholder');
   chatInput.focus();
 }
 
 function closeChat() {
-  isChatOpen = false;
+  window.setIsChatOpen(false);
   chatContainer.classList.add('hidden');
   chatInput.value = '';
   window.electronAPI.setIgnoreMouse(true);
@@ -46,20 +44,17 @@ async function sendMessage() {
 
   isProcessing = true;
   chatInput.value = '';
-  chatInput.placeholder = '우니가 생각 중...';
+  chatInput.placeholder = t('wooniThinking');
   chatInput.disabled = true;
 
-  // Show thinking state
   window.setState(window.PetState.TALKING);
-  window.showSpeech(`🤔 생각 중...`);
+  window.showSpeech(t('thinking'));
 
-  // Stream response
   let fullResponse = '';
   const streamHandler = (chunk) => {
     fullResponse += chunk;
-    // Show truncated response in speech bubble
-    const display = fullResponse.length > 300
-      ? fullResponse.substring(fullResponse.length - 300) + '...'
+    const display = fullResponse.length > 500
+      ? '...' + fullResponse.substring(fullResponse.length - 500)
       : fullResponse;
     window.updateSpeech(display);
   };
@@ -68,8 +63,8 @@ async function sendMessage() {
 
   try {
     const response = await window.electronAPI.askClaude(question);
-    // Show final response
-    window.showSpeech(response);
+    // Show final response with action buttons (copy, send to Claude)
+    window.showSpeech(response, 0, true);
 
     const readTime = Math.min(30000, Math.max(5000, response.length * 80));
     setTimeout(() => {
@@ -77,7 +72,7 @@ async function sendMessage() {
       window.setState(window.PetState.IDLE);
     }, readTime);
   } catch (e) {
-    window.showSpeech('미안, 답을 못 찾겠어... 😿');
+    window.showSpeech(t('sorry'));
     setTimeout(() => {
       window.hideSpeech();
       window.setState(window.PetState.IDLE);
@@ -86,7 +81,7 @@ async function sendMessage() {
 
   isProcessing = false;
   chatInput.disabled = false;
-  chatInput.placeholder = '우니에게 물어보세요...';
+  chatInput.placeholder = t('chatPlaceholder');
   chatInput.focus();
 }
 
@@ -101,20 +96,19 @@ chatInput.addEventListener('keydown', (e) => {
   }
 });
 
-// Keep chat area interactive
 chatContainer.addEventListener('mouseenter', () => {
   window.electronAPI.setIgnoreMouse(false);
 });
 
 chatContainer.addEventListener('mouseleave', () => {
-  if (!isChatOpen) {
+  if (!window.isChatOpen && chatContainer.classList.contains('hidden')) {
     window.electronAPI.setIgnoreMouse(true);
   }
 });
 
-// Close chat when clicking elsewhere
 document.addEventListener('click', (e) => {
-  if (isChatOpen && !chatContainer.contains(e.target) && !pet.contains(e.target)) {
+  if (!chatContainer.classList.contains('hidden') &&
+      !chatContainer.contains(e.target) && !pet.contains(e.target)) {
     closeChat();
   }
 });

@@ -17,13 +17,13 @@
         <!-- Left Leg -->
         <g class="leg leg-left">
           <path d="M35,100 L30,130" stroke="#7EC8E3" stroke-width="7" fill="none" stroke-linecap="round"/>
-          <ellipse cx="30" cy="133" rx="8" ry="5" fill="#5BB0D0"/><!-- foot -->
+          <ellipse cx="30" cy="133" rx="8" ry="5" fill="#5BB0D0"/>
         </g>
 
-        <!-- Right Leg -->
+        <!-- Right Leg (front) -->
         <g class="leg leg-right">
           <path d="M85,100 L90,130" stroke="#7EC8E3" stroke-width="7" fill="none" stroke-linecap="round"/>
-          <ellipse cx="90" cy="133" rx="8" ry="5" fill="#5BB0D0"/><!-- foot -->
+          <ellipse cx="90" cy="133" rx="8" ry="5" fill="#5BB0D0"/>
         </g>
 
         <!-- Body (round cat shape) -->
@@ -33,62 +33,69 @@
         <!-- Left Arm -->
         <g class="arm arm-left">
           <path d="M18,75 L5,95" stroke="#7EC8E3" stroke-width="6" fill="none" stroke-linecap="round"/>
-          <ellipse cx="4" cy="97" rx="5" ry="4" fill="#5BB0D0"/><!-- hand -->
+          <ellipse cx="4" cy="97" rx="5" ry="4" fill="#5BB0D0"/>
         </g>
 
         <!-- Right Arm -->
         <g class="arm arm-right">
           <path d="M102,75 L115,95" stroke="#7EC8E3" stroke-width="6" fill="none" stroke-linecap="round"/>
-          <ellipse cx="116" cy="97" rx="5" ry="4" fill="#5BB0D0"/><!-- hand -->
+          <ellipse cx="116" cy="97" rx="5" ry="4" fill="#5BB0D0"/>
         </g>
 
         <!-- Left Ear -->
         <path class="ear ear-left" d="M25,52 Q15,18 42,42" stroke="#7EC8E3" stroke-width="8" fill="#7EC8E3" stroke-linecap="round"/>
-        <path d="M27,49 Q20,24 40,43" stroke="#A8DFF0" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path class="ear-inner ear-inner-left" d="M27,49 Q20,24 40,43" stroke="#A8DFF0" stroke-width="3" fill="none" stroke-linecap="round"/>
 
         <!-- Right Ear -->
         <path class="ear ear-right" d="M95,52 Q105,18 78,42" stroke="#7EC8E3" stroke-width="8" fill="#7EC8E3" stroke-linecap="round"/>
-        <path d="M93,49 Q100,24 80,43" stroke="#A8DFF0" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path class="ear-inner ear-inner-right" d="M93,49 Q100,24 80,43" stroke="#A8DFF0" stroke-width="3" fill="none" stroke-linecap="round"/>
 
-        <!-- Eyes -->
-        <g class="eyes">
-          <ellipse class="eye eye-left" cx="42" cy="72" rx="6" ry="7" fill="#2C3E50"/>
-          <ellipse class="eye-shine" cx="44" cy="69" rx="2.5" ry="2.5" fill="white"/>
-          <ellipse class="eye eye-right" cx="78" cy="72" rx="6" ry="7" fill="#2C3E50"/>
-          <ellipse class="eye-shine" cx="80" cy="69" rx="2.5" ry="2.5" fill="white"/>
+        <!-- Face group (shifts toward walking direction) -->
+        <g class="face-group">
+          <!-- Eyes -->
+          <g class="eyes">
+            <ellipse class="eye eye-left" cx="42" cy="72" rx="6" ry="7" fill="#2C3E50"/>
+            <ellipse class="eye-shine eye-shine-left" cx="44" cy="69" rx="2.5" ry="2.5" fill="white"/>
+            <ellipse class="eye eye-right" cx="78" cy="72" rx="6" ry="7" fill="#2C3E50"/>
+            <ellipse class="eye-shine eye-shine-right" cx="80" cy="69" rx="2.5" ry="2.5" fill="white"/>
+          </g>
+
+          <!-- Closed Eyes (hidden by default, for sleeping) -->
+          <g class="eyes-closed" style="display:none">
+            <path d="M36,72 Q42,77 48,72" stroke="#2C3E50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <path d="M72,72 Q78,77 84,72" stroke="#2C3E50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- Dizzy X Eyes (hidden by default) -->
+          <g class="eyes-dizzy" style="display:none">
+            <line x1="36" y1="66" x2="48" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
+            <line x1="48" y1="66" x2="36" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
+            <line x1="72" y1="66" x2="84" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
+            <line x1="84" y1="66" x2="72" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
+          </g>
+
+          <!-- Nose -->
+          <ellipse class="nose" cx="60" cy="80" rx="3" ry="2" fill="#5BB0D0"/>
+
+          <!-- Mouth -->
+          <path class="mouth" d="M52,85 Q60,91 68,85" stroke="#2C3E50" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+          <!-- Whiskers -->
+          <g class="whiskers">
+            <g class="whiskers-left">
+              <line x1="15" y1="75" x2="35" y2="78" stroke="#2C3E50" stroke-width="1.2" opacity="0.4"/>
+              <line x1="15" y1="82" x2="35" y2="82" stroke="#2C3E50" stroke-width="1.2" opacity="0.4"/>
+            </g>
+            <g class="whiskers-right">
+              <line x1="85" y1="78" x2="105" y2="75" stroke="#2C3E50" stroke-width="1.2" opacity="0.4"/>
+              <line x1="85" y1="82" x2="105" y2="82" stroke="#2C3E50" stroke-width="1.2" opacity="0.4"/>
+            </g>
+          </g>
+
+          <!-- Blush -->
+          <ellipse class="blush blush-left" cx="30" cy="82" rx="7" ry="4" fill="#FFB6C1" opacity="0.5"/>
+          <ellipse class="blush blush-right" cx="90" cy="82" rx="7" ry="4" fill="#FFB6C1" opacity="0.5"/>
         </g>
-
-        <!-- Closed Eyes (hidden by default, for sleeping) -->
-        <g class="eyes-closed" style="display:none">
-          <path d="M36,72 Q42,77 48,72" stroke="#2C3E50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <path d="M72,72 Q78,77 84,72" stroke="#2C3E50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        </g>
-
-        <!-- Dizzy X Eyes (hidden by default, for flung/grabbed) -->
-        <g class="eyes-dizzy" style="display:none">
-          <line x1="36" y1="66" x2="48" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
-          <line x1="48" y1="66" x2="36" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
-          <line x1="72" y1="66" x2="84" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
-          <line x1="84" y1="66" x2="72" y2="78" stroke="#2C3E50" stroke-width="3" stroke-linecap="round"/>
-        </g>
-
-        <!-- Nose -->
-        <ellipse cx="60" cy="80" rx="3" ry="2" fill="#5BB0D0"/>
-
-        <!-- Mouth -->
-        <path class="mouth" d="M52,85 Q60,91 68,85" stroke="#2C3E50" stroke-width="2" fill="none" stroke-linecap="round"/>
-
-        <!-- Whiskers -->
-        <g class="whiskers" opacity="0.4">
-          <line x1="15" y1="75" x2="35" y2="78" stroke="#2C3E50" stroke-width="1.2"/>
-          <line x1="15" y1="82" x2="35" y2="82" stroke="#2C3E50" stroke-width="1.2"/>
-          <line x1="85" y1="78" x2="105" y2="75" stroke="#2C3E50" stroke-width="1.2"/>
-          <line x1="85" y1="82" x2="105" y2="82" stroke="#2C3E50" stroke-width="1.2"/>
-        </g>
-
-        <!-- Blush -->
-        <ellipse class="blush blush-left" cx="30" cy="82" rx="7" ry="4" fill="#FFB6C1" opacity="0.5"/>
-        <ellipse class="blush blush-right" cx="90" cy="82" rx="7" ry="4" fill="#FFB6C1" opacity="0.5"/>
       </svg>
 
       <!-- Voice indicator -->
@@ -101,24 +108,71 @@
 
     <!-- Speech Bubble -->
     <div id="speech-bubble" class="hidden">
-      <div id="speech-text"></div>
+      <div id="speech-content">
+        <div id="speech-text"></div>
+      </div>
+      <div id="speech-actions" class="hidden">
+        <button id="btn-copy" title="Copy">📋</button>
+        <button id="btn-send-claude" title="Send to Claude Code">🚀</button>
+      </div>
       <div class="speech-arrow"></div>
+    </div>
+  </div>
+
+  <!-- Cat House (숨숨집) - bottom right -->
+  <div id="cat-house" class="hidden">
+    <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- House body -->
+      <rect x="10" y="40" width="100" height="55" rx="8" fill="#D4A574"/>
+      <rect x="15" y="45" width="90" height="45" rx="5" fill="#C49464"/>
+      <!-- Roof -->
+      <polygon points="0,42 60,5 120,42" fill="#B07848"/>
+      <polygon points="8,42 60,12 112,42" fill="#C08858"/>
+      <!-- Door opening -->
+      <ellipse cx="60" cy="75" rx="22" ry="20" fill="#4A3520"/>
+      <ellipse cx="60" cy="75" rx="18" ry="16" fill="#3A2510"/>
+      <!-- Cushion inside -->
+      <ellipse cx="60" cy="82" rx="16" ry="6" fill="#FFB6C1" opacity="0.6"/>
+      <!-- Paw prints decoration -->
+      <circle cx="25" cy="55" r="3" fill="#B07848" opacity="0.5"/>
+      <circle cx="95" cy="55" r="3" fill="#B07848" opacity="0.5"/>
+    </svg>
+    <!-- Speech bubble from house (for notifications while cat is inside) -->
+    <div id="house-speech" class="hidden">
+      <div id="house-speech-text"></div>
+      <div class="speech-arrow"></div>
+    </div>
+
+    <!-- Optional paid AI CLI usage, anchored beside the house -->
+    <div id="ai-usage-panel" class="hidden" role="status" aria-live="polite">
+      <div id="ai-usage-providers"></div>
+      <button id="ai-usage-refresh" type="button" title="Refresh AI usage" aria-label="Refresh AI usage">↻</button>
+    </div>
+  </div>
+
+  <!-- Floating Notification (follows cursor) -->
+  <div id="floating-notification" class="hidden">
+    <div id="notif-text"></div>
+    <div id="notif-actions">
+      <button id="notif-show" class="notif-btn notif-show">Show me</button>
+      <button id="notif-later" class="notif-btn notif-later">Later</button>
+      <button id="notif-dismiss" class="notif-btn notif-dismiss">Go away</button>
     </div>
   </div>
 
   <!-- Chat Input (shown on double-click) -->
   <div id="chat-container" class="hidden">
     <div id="chat-box">
-      <input type="text" id="chat-input" placeholder="우니에게 물어보세요..." autocomplete="off"/>
+      <input type="text" id="chat-input" placeholder="Ask Wooni something..." autocomplete="off"/>
       <button id="chat-send">↵</button>
     </div>
   </div>
 
-  <!-- Settings button (small gear icon near pet) -->
-  <div id="settings-btn" class="hidden" title="Settings">⚙️</div>
-
+  <script src="i18n.js"></script>
   <script src="pet.js"></script>
+  <script src="usage.js"></script>
   <script src="voice.js"></script>
   <script src="chat.js"></script>
+  <script src="monitor.js"></script>
 </body>
 </html>
