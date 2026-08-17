@@ -1,96 +1,139 @@
 # Wooni (우니) - AI Desktop Pet
 
-커서를 따라다니는 AI 펫 데스크탑 앱. 음성/텍스트로 질문하면 Claude Code CLI를 통해 답변.
+A cursor-following AI pet desktop app. Ask questions via voice/text and get answers through Claude Code CLI.
 
 ## Tech Stack
-- **Electron** - 투명 오버레이 데스크탑 앱 (macOS)
-- **HTML/SVG/CSS** - 펫 캐릭터 렌더링 & 애니메이션
-- **Web Speech API** - 음성 인식 (웨이크워드 + STT)
-- **Claude Code CLI** - AI 질문-응답 (`claude -p`)
+- **Electron** - Transparent overlay desktop app (macOS, multi-monitor)
+- **HTML/SVG/CSS** - Pet character rendering & animation
+- **Web Speech API** - Voice recognition (wake word + STT) + TTS
+- **Claude Code CLI** - AI Q&A (`claude -p`)
 
-## 시작하기
+## Getting Started
 
 ```bash
 npm install
 npm start
 ```
 
-## 파일 구조
+## File Structure
 
 ```
-├── main.js              # Electron 메인 프로세스 (투명 윈도우, IPC, Claude CLI 연동)
+├── main.js              # Electron main process (multi-monitor window, IPC, Claude CLI, context menu, session monitor)
 ├── preload.js           # IPC bridge (contextBridge)
 ├── package.json
 ├── .gitignore
 ├── assets/
-│   └── wooni-character.svg  # Figma 편집용 독립 SVG 에셋
+│   └── wooni-character.svg  # Standalone SVG asset for Figma editing
 ├── renderer/
-│   ├── index.html       # 메인 HTML (인라인 SVG 캐릭터)
-│   ├── style.css        # 상태별 CSS 애니메이션 (idle, walking, dancing, grabbed, flung 등)
-│   ├── pet.js           # 펫 로직 (커서 따라가기, 물리엔진, 잡기/던지기, 클릭 인터랙션)
-│   ├── voice.js         # 음성 인식 (웨이크워드 "우니야" + STT)
-│   ├── chat.js          # 채팅 UI & Claude Code CLI 연동
-│   └── settings.html    # 설정 화면 (이름, 웨이크워드, 크기 등)
+│   ├── index.html       # Main HTML (inline SVG character)
+│   ├── style.css        # State-based CSS animations (idle, walking, dancing, grabbed, flung, etc.)
+│   ├── i18n.js          # Internationalization (English default + Korean)
+│   ├── pet.js           # Pet logic (delayed cursor following, physics, grab/fling, right-click menu, face shift)
+│   ├── voice.js         # Voice recognition (wake word + STT)
+│   ├── chat.js          # Chat UI & Claude Code CLI integration
+│   ├── monitor.js       # Claude Code session progress monitor + TTS notifications
+│   ├── usage.js         # Claude/Codex paid-plan usage panel beside the cat house
+│   └── settings.html    # Settings (language, speed, TTS, monitoring, etc.)
 ```
 
-## 구현 완료 기능
+## Completed Features
 
-### 1. 캐릭터 & 애니메이션
-- [x] SVG 고양이 캐릭터 (몸, 팔, 다리, 꼬리, 귀, 수염, 코, 볼터치)
-- [x] 상태별 CSS 애니메이션: idle, walking, sitting, dancing, listening, talking, sleeping, grabbed, flung
-- [x] X눈 (기절 눈) - 잡혔을 때 / 던져졌을 때
-- [x] 방향 전환 (좌우 flip)
+### 1. Character & Animation
+- [x] SVG cat character (body, arms, legs, tail, ears, whiskers, nose, blush)
+- [x] State-based CSS animations: idle, walking, sitting, dancing, listening, talking, sleeping, grabbed, flung
+- [x] Dizzy X-eyes when grabbed/flung
+- [x] Direction flip (left/right)
+- [x] **Realistic 4-phase walking gait** (diagonal leg pattern like real cats)
+- [x] **Face features shift toward walking direction** (eyes, nose, mouth, whiskers, ears)
+- [x] **Back legs** added for more realistic appearance
 
-### 2. 커서 따라가기
-- [x] Spring 물리 기반 부드러운 이동 (느린 속도: SPRING=0.012)
-- [x] 커서 오른쪽 아래에 오프셋 위치 (OFFSET_X=60, OFFSET_Y=50)
-- [x] 화면 오른쪽 끝 → 자동으로 왼쪽으로 전환
-- [x] 마우스 호버 2초 후 미클릭 시 오프셋 위치로 자동 후퇴
+### 2. Cursor Following
+- [x] Spring physics-based smooth movement
+- [x] **3-4 second delay** before following cursor (follows where cursor stopped)
+- [x] **3x slower speed** than original (SPRING: 0.004 vs 0.012)
+- [x] Cursor offset position (right-bottom offset)
+- [x] Auto left-side when near right screen edge
+- [x] Auto retreat to offset after 2s hover without click
 
-### 3. 인터랙션
-- [x] **싱글 클릭** (< 200ms): 춤추기 (3초)
-- [x] **더블 클릭**: 텍스트 채팅창 열기
-- [x] **길게 누르기** (> 200ms): 잡기 (X눈 + 찌그러짐)
-- [x] **잡은 상태에서 빠르게 놓기**: 그 방향으로 날아감 (회전 + 팔다리 허우적)
-- [x] 화면 가장자리 바운스, 중력 적용
-- [x] 착지 후 1.5초 기절 → 회복 후 다시 커서 따라옴
+### 3. Interactions
+- [x] **Single click** (< 200ms): Dance (3s)
+- [x] **Double click**: Open text chat
+- [x] **Long press** (> 200ms): Grab (X-eyes + squish)
+- [x] **Quick release while grabbed**: Fling in that direction (spin + flailing)
+- [x] Screen edge bounce, gravity applied
+- [x] 1.5s dizzy after landing → recovers and follows again
+- [x] **Right-click**: Context menu (Settings, Dance, Sleep, Wake, Quit)
 
-### 4. 음성 인식 (voice.js)
-- [x] Web Speech API 상시 대기
-- [x] 웨이크워드 "우니야" / "wooniya" 감지
-- [x] 감지 후 listening 상태 → 음성 질문 STT → Claude Code로 전송
-- [x] 단축키 Cmd+Shift+U 로도 즉시 활성화
+### 4. Voice Recognition (voice.js)
+- [x] Web Speech API always listening
+- [x] Wake word "wooni" / "wooniya" / "우니야" detection
+- [x] After detection → listening state → STT → sends to Claude Code
+- [x] Shortcut Cmd+Shift+U for instant activation
 
-### 5. Claude Code CLI 연동
-- [x] `child_process.spawn('claude', ['-p', question])` 으로 호출
-- [x] stdout 스트리밍으로 실시간 응답 표시
-- [x] 말풍선 UI로 답변 표시
-- [x] 60초 타임아웃
+### 5. Claude Code CLI Integration
+- [x] `child_process.spawn('claude', ['-p', question])` call
+- [x] stdout streaming for real-time response display
+- [x] Speech bubble UI for answers
+- [x] 60s timeout
+- [x] **Copy to clipboard** button on answers
+- [x] **Send to Claude Code** new session button
 
-### 6. 채팅 UI (chat.js)
-- [x] 더블클릭으로 입력창 표시
-- [x] Enter로 전송, Esc로 닫기
-- [x] Claude Code 응답을 말풍선에 표시
+### 6. Chat UI (chat.js)
+- [x] Double-click to show input
+- [x] Enter to send, Esc to close
+- [x] Show Claude Code response in speech bubble
+- [x] **Wider speech bubble** (480px max) with proper scrolling
 
-### 7. 설정 (settings.html)
-- [x] 펫 이름 (기본: 우니)
-- [x] 웨이크워드 변경
-- [x] 영문 웨이크워드 변경
-- [x] 음성 인식 on/off
-- [x] 펫 크기 조절
-- [x] 기어 아이콘으로 접근 (펫 호버 시 표시)
+### 7. Settings (settings.html)
+- [x] **Language selection** (English default, Korean)
+- [x] Pet name
+- [x] Wake word / Alt wake word
+- [x] Voice recognition on/off
+- [x] Pet size slider
+- [x] **Walking speed control** (slow ↔ fast)
+- [x] **TTS on/off, volume, mute**
+- [x] **Session monitoring toggles** (progress/completion notifications)
+- [x] **Claude/Codex usage panel toggles** (overall + provider-specific)
+- [x] **Right-click to open** (no more hover gear icon)
+- [x] Settings sync via IPC (real-time updates)
 
-## Figma 에셋 워크플로
-- `assets/wooni-character.svg` → Figma에 드래그&드롭으로 임포트
-- Figma 파일: https://www.figma.com/design/VEzdTdEfFK2YsLOtkPSRai/Wooni-pet-claoude
-- 각 부위가 id로 이름 지정 (body, arm-left, ear-right, face 등)
-- Figma에서 수정 후 → Claude Code에 "우니 디자인 반영해줘" → Figma MCP로 읽어서 코드 업데이트
+### 8. Multi-Monitor Support
+- [x] Window spans all connected displays
+- [x] Character can move across monitors
+- [x] Dynamic display change detection
+- [x] Proper edge clamping across full display bounds
 
-## 다음 작업 (TODO)
-- [ ] 설정 변경이 메인 윈도우에 실시간 반영되도록 IPC 연동
-- [ ] 화면 캡처 기능 (desktopCapturer) → "이거 뭐야?" 질문 지원
-- [ ] TTS (Text-to-Speech)로 음성 답변
-- [ ] 트레이 아이콘 & 메뉴
-- [ ] 앱 패키징 (electron-builder)
-- [ ] 펫 커스텀 스킨 시스템
-- [ ] 감정 상태 시스템 (기분에 따라 다른 반응)
+### 9. Session Monitoring (monitor.js)
+- [x] Watches `~/.claude/projects/` for active Claude Code sessions
+- [x] Detects progress updates and task completions
+- [x] Speech bubble notifications with "Meow!" prefix/suffix
+- [x] **TTS announcements** (Meow! [message] Meow!)
+- [x] Configurable in settings (enable/disable, progress/completion)
+- [x] Cute high-pitched TTS voice
+
+### 10. Internationalization (i18n.js)
+- [x] English as default language
+- [x] Full Korean translation
+- [x] All UI strings localized
+- [x] Language switch in settings
+
+### 11. Paid AI Usage Panel (usage.js)
+- [x] Compact Claude Code and Codex usage display beside the cat house
+- [x] Claude 5-hour and weekly limits via the official Claude CLI `/usage` output
+- [x] Codex limits via the official local app-server rate-limit API
+- [x] Live reset countdowns, warning colors, and manual refresh
+- [x] Show/hide from Settings or the pet/house right-click menu
+- [x] Per-provider toggles without reading auth files or Keychain credentials directly
+
+## Figma Asset Workflow
+- `assets/wooni-character.svg` → Drag & drop into Figma
+- Figma file: https://www.figma.com/design/VEzdTdEfFK2YsLOtkPSRai/Wooni-pet-claoude
+- Each part named with id (body, arm-left, ear-right, face, etc.)
+- Edit in Figma → tell Claude Code "update Wooni design" → reads via Figma MCP → updates code
+
+## TODO
+- [ ] Screen capture feature (desktopCapturer) → "What's this?" question support
+- [ ] Tray icon & menu
+- [ ] App packaging (electron-builder)
+- [ ] Pet custom skin system
+- [ ] Emotion state system (different reactions based on mood)

@@ -1,14 +1,14 @@
 // ===== Voice Recognition (Wake Word + STT) =====
 
 const VoiceState = {
-  IDLE: 'idle',           // Listening for wake word
-  LISTENING: 'listening', // Actively recording question
+  IDLE: 'idle',
+  LISTENING: 'listening',
   PROCESSING: 'processing',
 };
 
 let voiceState = VoiceState.IDLE;
 let recognition = null;
-let wakeWord = '우니야';
+let wakeWord = 'wooni';
 let wakeWordAlt = 'wooniya';
 let isVoiceEnabled = true;
 
@@ -33,7 +33,7 @@ function initVoice() {
   recognition = new SpeechRecognition();
   recognition.continuous = true;
   recognition.interimResults = true;
-  recognition.lang = 'ko-KR';
+  recognition.lang = getLanguage() === 'ko' ? 'ko-KR' : 'en-US';
   recognition.maxAlternatives = 3;
 
   recognition.onresult = handleSpeechResult;
@@ -50,9 +50,7 @@ function startListening() {
   try {
     recognition.start();
     voiceState = VoiceState.IDLE;
-  } catch (e) {
-    // Already started
-  }
+  } catch (e) {}
 }
 
 function stopListening() {
@@ -70,13 +68,11 @@ function handleSpeechResult(event) {
     const transcript = lastResult[i].transcript.toLowerCase().trim();
 
     if (voiceState === VoiceState.IDLE) {
-      // Check for wake word
       if (containsWakeWord(transcript)) {
         voiceState = VoiceState.LISTENING;
         window.setState(window.PetState.LISTENING);
-        window.showSpeech('듣고 있어! 말해봐~');
+        window.showSpeech(t('listening'));
 
-        // Extract question after wake word (if any in the same utterance)
         const question = extractAfterWakeWord(transcript);
         if (question && lastResult.isFinal) {
           processQuestion(question);
@@ -84,14 +80,12 @@ function handleSpeechResult(event) {
         return;
       }
     } else if (voiceState === VoiceState.LISTENING) {
-      // Show interim results
       if (!lastResult.isFinal) {
         const interim = lastResult[0].transcript.trim();
         if (interim) {
-          window.updateSpeech(`🎤 ${interim}...`);
+          window.updateSpeech(t('micListening', { text: interim }));
         }
       } else {
-        // Final result - process as question
         const question = lastResult[0].transcript.trim();
         if (question && !containsOnlyWakeWord(question)) {
           processQuestion(question);
@@ -107,18 +101,20 @@ function containsWakeWord(text) {
   const wake1 = wakeWord.toLowerCase().replace(/\s/g, '');
   const wake2 = wakeWordAlt.toLowerCase().replace(/\s/g, '');
   return lower.includes(wake1) || lower.includes(wake2)
-    || lower.includes('우니아') || lower.includes('우니') ;
+    || lower.includes('우니아') || lower.includes('우니')
+    || lower.includes('wooni') || lower.includes('hey wooni');
 }
 
 function containsOnlyWakeWord(text) {
   const clean = text.replace(/\s/g, '').toLowerCase();
   return clean === wakeWord.replace(/\s/g, '').toLowerCase()
     || clean === wakeWordAlt.replace(/\s/g, '').toLowerCase()
-    || clean === '우니야' || clean === '우니아' || clean === '우니';
+    || clean === '우니야' || clean === '우니아' || clean === '우니'
+    || clean === 'wooni' || clean === 'heywooni';
 }
 
 function extractAfterWakeWord(text) {
-  const patterns = [wakeWord, wakeWordAlt, '우니야', '우니아'];
+  const patterns = [wakeWord, wakeWordAlt, '우니야', '우니아', 'hey wooni', 'wooni'];
   let remaining = text;
   for (const pattern of patterns) {
     const idx = remaining.toLowerCase().indexOf(pattern.toLowerCase());
@@ -133,20 +129,18 @@ function extractAfterWakeWord(text) {
 async function processQuestion(question) {
   voiceState = VoiceState.PROCESSING;
   window.setState(window.PetState.TALKING);
-  window.showSpeech(`🤔 "${question}" 생각 중...`);
+  window.showSpeech(t('thinkingAbout', { q: question }));
 
   try {
-    // Send to Claude Code CLI via IPC
     const response = await window.electronAPI.askClaude(question);
-    window.showSpeech(response);
-    // Auto-hide after reading time (min 5s, max 30s)
+    window.showSpeech(response, 0, true); // show with action buttons
     const readTime = Math.min(30000, Math.max(5000, response.length * 80));
     setTimeout(() => {
       window.hideSpeech();
       window.setState(window.PetState.IDLE);
     }, readTime);
   } catch (e) {
-    window.showSpeech('미안, 답을 못 찾겠어... 😿');
+    window.showSpeech(t('sorry'));
     setTimeout(() => {
       window.hideSpeech();
       window.setState(window.PetState.IDLE);
@@ -157,10 +151,7 @@ async function processQuestion(question) {
 }
 
 function handleSpeechError(event) {
-  if (event.error === 'no-speech' || event.error === 'aborted') {
-    // These are normal, just restart
-    return;
-  }
+  if (event.error === 'no-speech' || event.error === 'aborted') return;
   console.warn('Speech error:', event.error);
   if (voiceState === VoiceState.LISTENING) {
     voiceState = VoiceState.IDLE;
@@ -170,11 +161,8 @@ function handleSpeechError(event) {
 }
 
 function handleSpeechEnd() {
-  // Auto-restart recognition (it stops automatically after silence)
   if (isVoiceEnabled) {
-    setTimeout(() => {
-      startListening();
-    }, 100);
+    setTimeout(() => startListening(), 100);
   }
 }
 
@@ -183,7 +171,7 @@ window.electronAPI.onActivateVoice(() => {
   if (voiceState === VoiceState.IDLE) {
     voiceState = VoiceState.LISTENING;
     window.setState(window.PetState.LISTENING);
-    window.showSpeech('듣고 있어! 말해봐~');
+    window.showSpeech(t('listening'));
   }
 });
 
@@ -202,5 +190,4 @@ window.voiceControl = {
   },
 };
 
-// Init
 initVoice();

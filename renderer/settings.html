@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>우니 설정</title>
+  <title>Wooni Settings</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -10,6 +10,7 @@
       background: #f5f5f7;
       color: #333;
       padding: 24px;
+      overflow-y: auto;
     }
     h1 {
       font-size: 20px;
@@ -43,6 +44,16 @@
       font-size: 14px;
       font-weight: 500;
     }
+    .setting-label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .setting-label small {
+      font-size: 11px;
+      color: #999;
+      font-weight: normal;
+    }
     input[type="text"] {
       border: 1px solid #ddd;
       border-radius: 8px;
@@ -53,6 +64,23 @@
     }
     input[type="range"] {
       width: 120px;
+    }
+    select {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 14px;
+      background: white;
+      min-width: 120px;
+    }
+    .range-with-labels {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .range-with-labels small {
+      font-size: 11px;
+      color: #999;
     }
     .toggle {
       position: relative;
@@ -96,6 +124,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: background 0.2s;
+      margin-top: 8px;
     }
     button.save:hover {
       background: #5BB0D0;
@@ -112,78 +141,339 @@
   </style>
 </head>
 <body>
-  <h1>🐾 우니 설정</h1>
+  <h1 id="title">🐾 Wooni Settings</h1>
 
+  <!-- Language -->
   <div class="setting-group">
-    <h2>캐릭터</h2>
+    <h2 id="lbl-language">Language</h2>
     <div class="setting-row">
-      <label>펫 이름</label>
-      <input type="text" id="pet-name" value="우니" />
-    </div>
-    <div class="setting-row">
-      <label>크기</label>
-      <input type="range" id="pet-size" min="40" max="160" value="80" />
+      <label id="lbl-language-label">App Language</label>
+      <select id="language">
+        <option value="en">English</option>
+        <option value="ko">한국어</option>
+      </select>
     </div>
   </div>
 
+  <!-- Character -->
   <div class="setting-group">
-    <h2>음성</h2>
+    <h2 id="lbl-character">Character</h2>
     <div class="setting-row">
-      <label>음성 인식</label>
+      <label id="lbl-pet-name">Pet Name</label>
+      <input type="text" id="pet-name" value="Wooni" />
+    </div>
+    <div class="setting-row">
+      <label id="lbl-size">Size</label>
+      <input type="range" id="pet-size" min="40" max="160" value="80" />
+    </div>
+    <div class="setting-row">
+      <div class="setting-label">
+        <label id="lbl-speed">Walking Speed</label>
+      </div>
+      <div class="range-with-labels">
+        <small id="lbl-slow">Slow</small>
+        <input type="range" id="walk-speed" min="1" max="100" value="25" />
+        <small id="lbl-fast">Fast</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voice & Sound -->
+  <div class="setting-group">
+    <h2 id="lbl-voice">Voice & Sound</h2>
+    <div class="setting-row">
+      <label id="lbl-voice-recognition">Voice Recognition</label>
       <label class="toggle">
         <input type="checkbox" id="voice-enabled" checked />
         <span class="slider"></span>
       </label>
     </div>
     <div class="setting-row">
-      <label>웨이크 워드</label>
-      <input type="text" id="wake-word" value="우니야" />
+      <label id="lbl-wake-word">Wake Word</label>
+      <input type="text" id="wake-word" value="wooni" />
     </div>
     <div class="setting-row">
-      <label>영문 웨이크 워드</label>
+      <label id="lbl-wake-word-alt">Alt Wake Word</label>
       <input type="text" id="wake-word-alt" value="wooniya" />
+    </div>
+    <div class="setting-row">
+      <label id="lbl-tts-enabled">Text-to-Speech (TTS)</label>
+      <label class="toggle">
+        <input type="checkbox" id="tts-enabled" />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <label id="lbl-tts-volume">TTS Volume</label>
+      <input type="range" id="tts-volume" min="0" max="100" value="80" />
+    </div>
+    <div class="setting-row">
+      <label id="lbl-tts-muted">Mute All Sounds</label>
+      <label class="toggle">
+        <input type="checkbox" id="tts-muted" />
+        <span class="slider"></span>
+      </label>
     </div>
   </div>
 
+  <!-- Session Monitoring -->
   <div class="setting-group">
-    <h2>단축키</h2>
+    <h2 id="lbl-monitoring">Session Monitoring</h2>
     <div class="setting-row">
-      <label>음성 활성화</label>
+      <div class="setting-label">
+        <label id="lbl-monitor-enabled">Monitor Claude Code sessions</label>
+        <small>Watch for progress in active Claude Code sessions</small>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="monitor-enabled" />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <label id="lbl-monitor-progress">Notify on progress</label>
+      <label class="toggle">
+        <input type="checkbox" id="monitor-notify-progress" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <label id="lbl-monitor-complete">Notify on completion</label>
+      <label class="toggle">
+        <input type="checkbox" id="monitor-notify-complete" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <label id="lbl-snooze-duration">Snooze Duration (min)</label>
+      <input type="range" id="snooze-duration" min="1" max="30" value="5" />
+    </div>
+  </div>
+
+  <!-- Paid AI CLI Usage -->
+  <div class="setting-group">
+    <h2 id="lbl-usage-section">AI Usage</h2>
+    <div class="setting-row">
+      <div class="setting-label">
+        <label id="lbl-usage-enabled">Show usage near the house</label>
+        <small id="lbl-usage-hint">Reads rate limits through each installed CLI</small>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="usage-enabled" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <label id="lbl-usage-claude">Claude Code</label>
+      <label class="toggle">
+        <input type="checkbox" id="usage-claude-enabled" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <label id="lbl-usage-codex">Codex</label>
+      <label class="toggle">
+        <input type="checkbox" id="usage-codex-enabled" checked />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Shortcuts -->
+  <div class="setting-group">
+    <h2 id="lbl-shortcuts">Shortcuts</h2>
+    <div class="setting-row">
+      <label id="lbl-voice-activation">Voice Activation</label>
       <input type="text" id="shortcut" value="Cmd+Shift+U" readonly />
     </div>
   </div>
 
-  <button class="save" onclick="saveSettings()">저장</button>
-  <div class="saved-msg" id="saved-msg">설정이 저장되었습니다!</div>
+  <button class="save" id="btn-save" onclick="saveSettings()">Save</button>
+  <div class="saved-msg" id="saved-msg">Settings saved!</div>
 
   <script>
-    // Load saved settings
-    try {
-      const saved = localStorage.getItem('wooni-settings');
-      if (saved) {
-        const s = JSON.parse(saved);
-        if (s.petName) document.getElementById('pet-name').value = s.petName;
-        if (s.petSize) document.getElementById('pet-size').value = s.petSize;
-        if (s.voiceEnabled !== undefined) document.getElementById('voice-enabled').checked = s.voiceEnabled;
-        if (s.wakeWord) document.getElementById('wake-word').value = s.wakeWord;
-        if (s.wakeWordAlt) document.getElementById('wake-word-alt').value = s.wakeWordAlt;
-      }
-    } catch (e) {}
+    // i18n translations for settings page
+    const I18N_SETTINGS = {
+      en: {
+        title: '🐾 Wooni Settings',
+        language: 'Language',
+        languageLabel: 'App Language',
+        character: 'Character',
+        petName: 'Pet Name',
+        size: 'Size',
+        speed: 'Walking Speed',
+        slow: 'Slow',
+        fast: 'Fast',
+        voice: 'Voice & Sound',
+        voiceRecognition: 'Voice Recognition',
+        wakeWord: 'Wake Word',
+        wakeWordAlt: 'Alt Wake Word',
+        ttsEnabled: 'Text-to-Speech (TTS)',
+        ttsVolume: 'TTS Volume',
+        ttsMuted: 'Mute All Sounds',
+        monitoring: 'Session Monitoring',
+        monitorEnabled: 'Monitor Claude Code sessions',
+        monitorProgress: 'Notify on progress',
+        monitorComplete: 'Notify on completion',
+        snoozeDuration: 'Snooze Duration (min)',
+        usageSection: 'AI Usage',
+        usageEnabled: 'Show usage near the house',
+        usageHint: 'Reads rate limits through each installed CLI',
+        usageClaude: 'Claude Code',
+        usageCodex: 'Codex',
+        shortcuts: 'Shortcuts',
+        voiceActivation: 'Voice Activation',
+        save: 'Save',
+        saved: 'Settings saved!',
+      },
+      ko: {
+        title: '🐾 우니 설정',
+        language: '언어',
+        languageLabel: '앱 언어',
+        character: '캐릭터',
+        petName: '펫 이름',
+        size: '크기',
+        speed: '걸어오는 속도',
+        slow: '느림',
+        fast: '빠름',
+        voice: '음성 & 소리',
+        voiceRecognition: '음성 인식',
+        wakeWord: '웨이크 워드',
+        wakeWordAlt: '영문 웨이크 워드',
+        ttsEnabled: '음성 안내 (TTS)',
+        ttsVolume: 'TTS 볼륨',
+        ttsMuted: '모든 소리 끄기',
+        monitoring: '세션 모니터링',
+        monitorEnabled: 'Claude Code 세션 모니터링',
+        monitorProgress: '진행 상황 알림',
+        monitorComplete: '완료 알림',
+        snoozeDuration: '스누즈 시간 (분)',
+        usageSection: 'AI 사용량',
+        usageEnabled: '집 근처에 사용량 표시',
+        usageHint: '설치된 각 CLI를 통해 한도 정보를 읽습니다',
+        usageClaude: 'Claude Code',
+        usageCodex: 'Codex',
+        shortcuts: '단축키',
+        voiceActivation: '음성 활성화',
+        save: '저장',
+        saved: '설정이 저장되었습니다!',
+      },
+    };
 
-    function saveSettings() {
+    let currentLang = 'en';
+
+    function applyLanguage(lang) {
+      currentLang = lang;
+      const t = I18N_SETTINGS[lang] || I18N_SETTINGS.en;
+      document.getElementById('title').textContent = t.title;
+      document.getElementById('lbl-language').textContent = t.language;
+      document.getElementById('lbl-language-label').textContent = t.languageLabel;
+      document.getElementById('lbl-character').textContent = t.character;
+      document.getElementById('lbl-pet-name').textContent = t.petName;
+      document.getElementById('lbl-size').textContent = t.size;
+      document.getElementById('lbl-speed').textContent = t.speed;
+      document.getElementById('lbl-slow').textContent = t.slow;
+      document.getElementById('lbl-fast').textContent = t.fast;
+      document.getElementById('lbl-voice').textContent = t.voice;
+      document.getElementById('lbl-voice-recognition').textContent = t.voiceRecognition;
+      document.getElementById('lbl-wake-word').textContent = t.wakeWord;
+      document.getElementById('lbl-wake-word-alt').textContent = t.wakeWordAlt;
+      document.getElementById('lbl-tts-enabled').textContent = t.ttsEnabled;
+      document.getElementById('lbl-tts-volume').textContent = t.ttsVolume;
+      document.getElementById('lbl-tts-muted').textContent = t.ttsMuted;
+      document.getElementById('lbl-monitoring').textContent = t.monitoring;
+      document.getElementById('lbl-monitor-enabled').textContent = t.monitorEnabled;
+      document.getElementById('lbl-monitor-progress').textContent = t.monitorProgress;
+      document.getElementById('lbl-monitor-complete').textContent = t.monitorComplete;
+      document.getElementById('lbl-snooze-duration').textContent = t.snoozeDuration;
+      document.getElementById('lbl-usage-section').textContent = t.usageSection;
+      document.getElementById('lbl-usage-enabled').textContent = t.usageEnabled;
+      document.getElementById('lbl-usage-hint').textContent = t.usageHint;
+      document.getElementById('lbl-usage-claude').textContent = t.usageClaude;
+      document.getElementById('lbl-usage-codex').textContent = t.usageCodex;
+      document.getElementById('lbl-shortcuts').textContent = t.shortcuts;
+      document.getElementById('lbl-voice-activation').textContent = t.voiceActivation;
+      document.getElementById('btn-save').textContent = t.save;
+      document.getElementById('saved-msg').textContent = t.saved;
+    }
+
+    // Language change handler
+    document.getElementById('language').addEventListener('change', (e) => {
+      applyLanguage(e.target.value);
+    });
+
+    // Load saved settings
+    async function loadSettings() {
+      let settings = null;
+      try {
+        settings = await window.electronAPI.getSettings();
+      } catch (e) {}
+
+      // Fallback to localStorage
+      if (!settings) {
+        try {
+          const saved = localStorage.getItem('wooni-settings');
+          if (saved) settings = JSON.parse(saved);
+        } catch (e) {}
+      }
+
+      if (settings) {
+        if (settings.language) {
+          document.getElementById('language').value = settings.language;
+          applyLanguage(settings.language);
+        }
+        if (settings.petName) document.getElementById('pet-name').value = settings.petName;
+        if (settings.petSize) document.getElementById('pet-size').value = settings.petSize;
+        if (settings.walkSpeed !== undefined) document.getElementById('walk-speed').value = settings.walkSpeed;
+        if (settings.voiceEnabled !== undefined) document.getElementById('voice-enabled').checked = settings.voiceEnabled;
+        if (settings.wakeWord) document.getElementById('wake-word').value = settings.wakeWord;
+        if (settings.wakeWordAlt) document.getElementById('wake-word-alt').value = settings.wakeWordAlt;
+        if (settings.ttsEnabled !== undefined) document.getElementById('tts-enabled').checked = settings.ttsEnabled;
+        if (settings.ttsVolume !== undefined) document.getElementById('tts-volume').value = settings.ttsVolume * 100;
+        if (settings.ttsMuted !== undefined) document.getElementById('tts-muted').checked = settings.ttsMuted;
+        if (settings.monitorEnabled !== undefined) document.getElementById('monitor-enabled').checked = settings.monitorEnabled;
+        if (settings.monitorNotifyProgress !== undefined) document.getElementById('monitor-notify-progress').checked = settings.monitorNotifyProgress;
+        if (settings.monitorNotifyComplete !== undefined) document.getElementById('monitor-notify-complete').checked = settings.monitorNotifyComplete;
+        if (settings.snoozeDuration !== undefined) document.getElementById('snooze-duration').value = settings.snoozeDuration;
+        if (settings.usageEnabled !== undefined) document.getElementById('usage-enabled').checked = settings.usageEnabled;
+        if (settings.usageClaudeEnabled !== undefined) document.getElementById('usage-claude-enabled').checked = settings.usageClaudeEnabled;
+        if (settings.usageCodexEnabled !== undefined) document.getElementById('usage-codex-enabled').checked = settings.usageCodexEnabled;
+      }
+    }
+
+    async function saveSettings() {
       const settings = {
+        language: document.getElementById('language').value,
         petName: document.getElementById('pet-name').value,
         petSize: parseInt(document.getElementById('pet-size').value),
+        walkSpeed: parseInt(document.getElementById('walk-speed').value),
         voiceEnabled: document.getElementById('voice-enabled').checked,
         wakeWord: document.getElementById('wake-word').value,
         wakeWordAlt: document.getElementById('wake-word-alt').value,
+        ttsEnabled: document.getElementById('tts-enabled').checked,
+        ttsVolume: parseInt(document.getElementById('tts-volume').value) / 100,
+        ttsMuted: document.getElementById('tts-muted').checked,
+        monitorEnabled: document.getElementById('monitor-enabled').checked,
+        monitorNotifyProgress: document.getElementById('monitor-notify-progress').checked,
+        monitorNotifyComplete: document.getElementById('monitor-notify-complete').checked,
+        snoozeDuration: parseInt(document.getElementById('snooze-duration').value),
+        usageEnabled: document.getElementById('usage-enabled').checked,
+        usageClaudeEnabled: document.getElementById('usage-claude-enabled').checked,
+        usageCodexEnabled: document.getElementById('usage-codex-enabled').checked,
       };
+
+      // Save to both localStorage and main process
       localStorage.setItem('wooni-settings', JSON.stringify(settings));
+
+      try {
+        await window.electronAPI.saveSettings(settings);
+      } catch (e) {}
 
       const msg = document.getElementById('saved-msg');
       msg.classList.add('show');
       setTimeout(() => msg.classList.remove('show'), 2000);
     }
+
+    loadSettings();
   </script>
 </body>
 </html>
